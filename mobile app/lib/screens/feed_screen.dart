@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/widget/news_card.dart';
+import 'package:mobile_app/widget/search_parking_button.dart';
 
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
@@ -15,13 +17,13 @@ class FeedScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min, // Ajustar al contenido
           children: [
             Icon(
-              Icons.directions_car,
+              Icons.local_parking, 
               color: Colors.white,
               size: 28,
             ), // Icono de auto (confirmado por el usuario)
             SizedBox(width: 8), // Espacio entre el icono y el texto
             Text(
-              'ParkEasy', // Nombre de la app más prominente
+              'AutoSlot', // Nombre de la app más prominente
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -90,9 +92,7 @@ class FeedScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       // Barra de búsqueda/botón principal
-                      _SearchParkingButton(
-                        horizontalPadding: horizontalPadding,
-                      ),
+                      SearchParkingButton(horizontalPadding: horizontalPadding),
                     ],
                   ),
                 ),
@@ -218,67 +218,22 @@ class FeedScreen extends StatelessWidget {
             ),
           ];
         },
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        body: Center(
           child: ListView.builder(
             padding: EdgeInsets.zero,
             itemCount: 5, // Ejemplo de 5 elementos de noticias/promociones
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.only(
-                  bottom: 12.0,
+                  bottom: 0.25,
                 ), // Espacio entre tarjetas de novedades
-                child: _NewsCard(
+                child: NewsCard(
                   index: index,
                 ), // Usar un widget separado para las tarjetas de novedades
               );
             },
           ),
         ),
-      ),
-    );
-  }
-}
-
-// Widget de Botón de Búsqueda de Parqueo (para la parte superior)
-class _SearchParkingButton extends StatelessWidget {
-  final double horizontalPadding;
-  const _SearchParkingButton({required this.horizontalPadding});
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.of(context).pushNamed('/map');
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue.shade800,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // Bordes redondeados
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 15,
-        ), // Padding más generoso
-        elevation: 6, // Sombra para que destaque
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.search, // Icono de búsqueda
-            size: 28 * MediaQuery.of(context).textScaler.scale(1),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Busca Parqueo', // Texto del botón
-            style: TextStyle(
-              fontSize: 18 * MediaQuery.of(context).textScaler.scale(1),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -466,86 +421,6 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-// Widget para las Tarjetas de Novedades
-class _NewsCard extends StatelessWidget {
-  final int index;
-  const _NewsCard({required this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    String title;
-    String? subtitle;
-    IconData icon;
-    Color color;
-
-    if (index == 0) {
-      title = '¡Descuento del 10% en tu próxima reserva!';
-      subtitle = 'Válido hasta el 30 de junio.';
-      icon = Icons.local_offer;
-      color = Colors.blue.shade700;
-    } else if (index == 1) {
-      title = 'Recuerda revisar la disponibilidad antes de salir.';
-      icon = Icons.info;
-      color = Colors.green.shade700;
-    } else if (index == 2) {
-      title = 'Nueva función: historial de parqueo disponible.';
-      subtitle = 'Explora tus reservas pasadas y futuras.';
-      icon = Icons.history_edu; // Icono diferente
-      color = Colors.purple.shade700;
-    } else if (index == 3) {
-      title = '¡Gana puntos extra refiriendo amigos!';
-      subtitle = 'Invita a tus amigos y obtén beneficios.';
-      icon = Icons.people_alt;
-      color = Colors.amber.shade700;
-    } else {
-      title = 'Actualización de seguridad: tu cuenta más protegida.';
-      subtitle = 'Conoce las nuevas medidas de seguridad.';
-      icon = Icons.security;
-      color = Colors.teal.shade700;
-    }
-
-    return Card(
-      color: color.withOpacity(0.05), // Fondo muy sutil del color del icono
-      elevation: 2, // Sombra más ligera
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        leading: Icon(
-          icon,
-          color: color,
-          size: 28 * MediaQuery.of(context).textScaler.scale(1),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 16 * MediaQuery.of(context).textScaler.scale(1),
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 13 * MediaQuery.of(context).textScaler.scale(1),
-                  color: Colors.black54,
-                ),
-              )
-            : null,
-        onTap: () {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Novedad: "$title"')));
-          // Lógica para ver el detalle de la novedad
-        },
-      ),
-    );
-  }
-}
-
 // Widget del Cajón de Usuario (Drawer)
 class _UserDrawer extends StatelessWidget {
   const _UserDrawer({super.key});
@@ -639,7 +514,7 @@ class _UserDrawer extends StatelessWidget {
             ),
             onTap: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pushNamed('/payment');
+              Navigator.of(context).pushNamed('/reservations');
             },
           ),
           const Divider(),
