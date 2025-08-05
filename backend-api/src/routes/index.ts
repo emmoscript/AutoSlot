@@ -15,5 +15,4 @@ export default function createRoutes(db: Database): Router {
   router.use('/sensors', sensorRoutes);
   router.use('/auth', createAuthRoutes(db));
 
-  return router;
-} 
+export default router; 

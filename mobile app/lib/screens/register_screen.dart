@@ -1,8 +1,9 @@
+// screens/register_screen.dart
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -10,20 +11,49 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _name = '';
-  String _email = '';
-  String _password = '';
-  String _plate = '';
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _plateController = TextEditingController();
+
+  bool _isLoading = false;
   String? _error;
 
-  void _register() {
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _plateController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      final success = AuthService.register(_name, _email, _password, _plate);
-      if (success) {
-        Navigator.of(context).pushReplacementNamed('/feed');
-      } else {
-        setState(() => _error = 'Registro incorrecto');
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      try {
+        final user = await AuthService.register(
+          _nameController.text,
+          _emailController.text,
+          _passwordController.text,
+          _plateController.text,
+        );
+
+        if (user != null && mounted) {
+          Navigator.pushReplacementNamed(context, '/feed');
+        }
+      } catch (e) {
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+        });
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -31,52 +61,72 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registro')),
+      appBar: AppBar(title: const Text('Register')),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20.0),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              const SizedBox(height: 32),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Nombre completo'),
-                validator: (v) => v == null || v.isEmpty ? 'Ingrese su nombre' : null,
-                onSaved: (v) => _name = v ?? '',
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Full Name'),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Please enter your name' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
+                controller: _emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
-                validator: (v) => v == null || v.isEmpty ? 'Ingrese su email' : null,
-                onSaved: (v) => _email = v ?? '',
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Please enter your email';
+                  if (!value!.contains('@'))
+                    return 'Please enter a valid email';
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: 'Password'),
                 obscureText: true,
-                validator: (v) => v == null || v.isEmpty ? 'Ingrese su contraseña' : null,
-                onSaved: (v) => _password = v ?? '',
+                validator: (value) {
+                  if (value?.isEmpty ?? true) return 'Please enter a password';
+                  if (value!.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Placa del vehículo'),
-                validator: (v) => v == null || v.isEmpty ? 'Ingrese la placa' : null,
-                onSaved: (v) => _plate = v ?? '',
+                controller: _plateController,
+                decoration: const InputDecoration(
+                  labelText: 'Vehicle License Plate',
+                ),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Please enter your plate' : null,
               ),
               if (_error != null) ...[
-                const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 16),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ],
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _register,
-                child: const Text('Registrarse'),
+                onPressed: _isLoading ? null : _register,
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text('Register'),
               ),
-              const SizedBox(height: 16),
               TextButton(
-                onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
-                child: const Text('¿Ya tienes cuenta? Inicia sesión'),
+                onPressed: _isLoading
+                    ? null
+                    : () => Navigator.pushReplacementNamed(context, '/login'),
+                child: const Text('Already have an account? Login'),
               ),
             ],
           ),
@@ -84,4 +134,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-} 
+}
