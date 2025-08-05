@@ -9,6 +9,20 @@ CREATE TABLE parking_lots (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabla para usuarios (nueva)
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    vehicle_plate TEXT,
+    phone TEXT,
+    role TEXT DEFAULT 'user' CHECK(role IN ('user', 'admin')),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Modificamos la tabla de espacios de estacionamiento
 CREATE TABLE parking_spaces (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,6 +42,7 @@ CREATE TABLE parking_spaces (
 CREATE TABLE IF NOT EXISTS reservations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   parking_space_id INTEGER NOT NULL,
+  user_id INTEGER,
   user_phone VARCHAR(15) NOT NULL,
   start_time DATETIME NOT NULL,
   end_time DATETIME,
@@ -36,7 +51,8 @@ CREATE TABLE IF NOT EXISTS reservations (
   status VARCHAR(20) DEFAULT 'active',
   license_plate VARCHAR(10),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (parking_space_id) REFERENCES parking_spaces(id)
+  FOREIGN KEY (parking_space_id) REFERENCES parking_spaces(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- Tabla: pricing_rules
@@ -65,17 +81,32 @@ BEGIN
     UPDATE parking_spaces SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
 
+CREATE TRIGGER update_users_updated_at
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+    UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;
+
 -- Índices para mejorar el rendimiento de las búsquedas
 CREATE INDEX idx_spaces_lot_id ON parking_spaces(lot_id);
 CREATE INDEX idx_spaces_availability ON parking_spaces(is_available);
 CREATE INDEX idx_reservations_space_id ON reservations(parking_space_id);
 CREATE INDEX idx_reservations_user ON reservations(user_phone);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_phone ON users(phone);
 
 -- Datos de ejemplo
 INSERT INTO parking_lots (name, address, latitude, longitude) VALUES
 ('Acrópolis Center', 'Av. Winston Churchill, Santo Domingo', 18.4682, -69.9392),
 ('Blue Mall', 'Av. Winston Churchill 95, Santo Domingo', 18.4627, -69.9405),
 ('Galería 360', 'Av. John F. Kennedy, Santo Domingo', 18.4873, -69.9401);
+
+-- Usuarios de ejemplo (password: 'password123' hasheado)
+INSERT INTO users (name, email, password_hash, vehicle_plate, phone, role) VALUES
+('Juan Pérez', 'juan@example.com', '$2b$10$rQZ8K9mN2pL1oX3vY6wA7eR4tU5iI8oP9qW2eR3tY6uI7oP8qW9eR0tY1uI2oP', 'ABC123', '+18095551234', 'user'),
+('María García', 'maria@example.com', '$2b$10$rQZ8K9mN2pL1oX3vY6wA7eR4tU5iI8oP9qW2eR3tY6uI7oP8qW9eR0tY1uI2oP', 'XYZ789', '+18095555678', 'user'),
+('Admin', 'admin@autoslot.com', '$2b$10$rQZ8K9mN2pL1oX3vY6wA7eR4tU5iI8oP9qW2eR3tY6uI7oP8qW9eR0tY1uI2oP', 'ADMIN001', '+18095550000', 'admin');
 
 -- Espacios para Acrópolis Center (Lote 1)
 INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES

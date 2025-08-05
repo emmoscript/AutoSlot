@@ -1,0 +1,1 @@
+ D:\\vs-code-projects\\auto_slot_v2\\AutoSlot\\mobile\ app\\.dart_tool\\flutter_build\\ffd78038332898f6b8fb0303dcfea66e\\native_assets.json: 

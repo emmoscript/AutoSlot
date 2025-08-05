@@ -1,6 +1,6 @@
-import { getDb } from '../database';
+import { Database, RunResult } from 'sqlite3';
 import { Reservation, CreateReservationRequest } from '../types';
-import { parkingSpaceService } from './parkingSpaceService';
+import { ParkingSpaceService } from './parkingSpaceService';
 
 // Helper function to map a database row to a Reservation object
 const rowToReservation = (row: any): Reservation => {
@@ -50,110 +50,166 @@ const BASE_RESERVATION_QUERY = `
   JOIN parking_lots l ON s.lot_id = l.id
 `;
 
-export const reservationService = {
+export class ReservationService {
+  private db: Database;
+  private parkingSpaceService: ParkingSpaceService;
+
+  constructor(db: Database) {
+    this.db = db;
+    this.parkingSpaceService = new ParkingSpaceService(db);
+  }
+
   async createReservation(data: CreateReservationRequest): Promise<Reservation> {
-    const db = await getDb();
-    
-    const space = await parkingSpaceService.getSpaceById(data.parking_space_id);
+    const space = await this.parkingSpaceService.getSpaceById(data.parking_space_id);
     if (!space) throw new Error('Parking space not found');
     if (!space.is_available) throw new Error('Parking space is not available');
 
-    // Validar que no hay reservas solapadas
-    const overlappingReservations = await db.all(`
-      SELECT * FROM reservations 
-      WHERE parking_space_id = ? AND status = 'active'
-      AND (
-        (start_time <= datetime('now') AND (end_time IS NULL OR end_time > datetime('now'))) OR
-        (start_time <= datetime('now', '+' || ? || ' minutes') AND start_time > datetime('now'))
-      )
-    `, [data.parking_space_id, data.estimated_duration]);
+    return new Promise((resolve, reject) => {
+      // Validar que no hay reservas solapadas
+      this.db.all(`
+        SELECT * FROM reservations 
+        WHERE parking_space_id = ? AND status = 'active'
+        AND (
+          (start_time <= datetime('now') AND (end_time IS NULL OR end_time > datetime('now'))) OR
+          (start_time <= datetime('now', '+' || ? || ' minutes') AND start_time > datetime('now'))
+        )
+      `, [data.parking_space_id, data.estimated_duration], async (err, overlappingReservations) => {
+        if (err) {
+          reject(err);
+          return;
+        }
 
-    if (overlappingReservations.length > 0) {
-      throw new Error('Space is already reserved for this time period');
-    }
+        if (overlappingReservations && overlappingReservations.length > 0) {
+          reject(new Error('Space is already reserved for this time period'));
+          return;
+        }
 
-    // Validar que el usuario no tiene más de 2 reservas activas
-    const userActiveReservations = await db.all(`
-      SELECT COUNT(*) as count FROM reservations 
-      WHERE user_phone = ? AND status = 'active'
-    `, [data.user_phone]);
+        // Validar que el usuario no tiene más de 2 reservas activas
+        this.db.all(`
+          SELECT COUNT(*) as count FROM reservations 
+          WHERE user_phone = ? AND status = 'active'
+        `, [data.user_phone], async (err, userActiveReservations) => {
+          if (err) {
+            reject(err);
+            return;
+          }
 
-    if (userActiveReservations[0].count >= 2) {
-      throw new Error('User cannot have more than 2 active reservations');
-    }
+          if (userActiveReservations && userActiveReservations[0] && (userActiveReservations[0] as any).count >= 2) {
+            reject(new Error('User cannot have more than 2 active reservations'));
+            return;
+          }
 
-    // Calcular precio total
-    const currentPrice = await parkingSpaceService.calculateCurrentPrice(data.parking_space_id);
-    const totalCost = (currentPrice * data.estimated_duration) / 60;
+          // Calcular precio total
+          const currentPrice = await this.parkingSpaceService.calculateCurrentPrice(data.parking_space_id);
+          const totalCost = (currentPrice * data.estimated_duration) / 60;
 
-    // Crear la reserva
-    const result = await db.run(`
-      INSERT INTO reservations (
-        parking_space_id, user_phone, start_time, estimated_duration, 
-        total_cost, license_plate, status
-      ) VALUES (?, ?, datetime('now'), ?, ?, ?, 'active')
-    `, [
-      data.parking_space_id,
-      data.user_phone,
-      data.estimated_duration,
-      totalCost,
-      data.license_plate || null
-    ]);
+          // Crear la reserva
+          this.db.run(`
+            INSERT INTO reservations (
+              parking_space_id, user_phone, start_time, estimated_duration, 
+              total_cost, license_plate, status
+            ) VALUES (?, ?, datetime('now'), ?, ?, ?, 'active')
+          `, [
+            data.parking_space_id,
+            data.user_phone,
+            data.estimated_duration,
+            totalCost,
+            data.license_plate || null
+          ], async function(err: any) {
+            if (err) {
+              reject(err);
+              return;
+            }
 
-    // Actualizar disponibilidad del espacio
-    await parkingSpaceService.updateAvailability(data.parking_space_id, false);
+            // Actualizar disponibilidad del espacio
+            await this.parkingSpaceService.updateAvailability(data.parking_space_id, false);
 
-    // Obtener la reserva creada
-    const newReservation = await this.getReservationById(result.lastID!);
-    return newReservation!;
-  },
+            // Obtener la reserva creada
+            const newReservation = await this.getReservationById(this.lastID);
+            resolve(newReservation!);
+          }.bind({ 
+            parkingSpaceService: this.parkingSpaceService, 
+            getReservationById: this.getReservationById.bind(this) 
+          }));
+        });
+      });
+    });
+  }
 
   async getReservationById(id: number): Promise<Reservation | undefined> {
-    const db = await getDb();
-    const row = await db.get(`${BASE_RESERVATION_QUERY} WHERE r.id = ?`, id);
-    return row ? rowToReservation(row) : undefined;
-  },
+    return new Promise((resolve, reject) => {
+      this.db.get(`${BASE_RESERVATION_QUERY} WHERE r.id = ?`, [id], (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(row ? rowToReservation(row) : undefined);
+      });
+    });
+  }
 
   async getUserReservations(phone: string): Promise<Reservation[]> {
-    const db = await getDb();
-    const rows = await db.all(`${BASE_RESERVATION_QUERY} WHERE r.user_phone = ? ORDER BY r.start_time DESC`, phone);
-    return rows.map(rowToReservation);
-  },
+    return new Promise((resolve, reject) => {
+      this.db.all(`${BASE_RESERVATION_QUERY} WHERE r.user_phone = ? ORDER BY r.start_time DESC`, [phone], (err, rows) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(rows ? rows.map(rowToReservation) : []);
+      });
+    });
+  }
 
   async completeReservation(id: number): Promise<Reservation> {
-    const db = await getDb();
     const reservation = await this.getReservationById(id);
     if (!reservation) throw new Error('Reservation not found');
     if (reservation.status !== 'active') throw new Error('Reservation is not active');
     
-    const now = new Date();
-    const startTime = new Date(reservation.start_time);
-    const actualDuration = Math.round((now.getTime() - startTime.getTime()) / (1000 * 60)); // duration in minutes
+    return new Promise((resolve, reject) => {
+      const now = new Date();
+      const startTime = new Date(reservation.start_time);
+      const actualDuration = Math.round((now.getTime() - startTime.getTime()) / (1000 * 60)); // duration in minutes
 
-    const currentPrice = await parkingSpaceService.calculateCurrentPrice(reservation.parking_space_id);
-    const finalCost = (currentPrice * actualDuration) / 60;
+      this.parkingSpaceService.calculateCurrentPrice(reservation.parking_space_id).then(currentPrice => {
+        const finalCost = (currentPrice * actualDuration) / 60;
 
-    await db.run(
-      `UPDATE reservations SET end_time = ?, actual_duration = ?, total_cost = ?, status = 'completed' WHERE id = ?`,
-      [now.toISOString(), actualDuration, finalCost, id]
-    );
+        this.db.run(
+          `UPDATE reservations SET end_time = ?, actual_duration = ?, total_cost = ?, status = 'completed' WHERE id = ?`,
+          [now.toISOString(), actualDuration, finalCost, id],
+          async (err) => {
+            if (err) {
+              reject(err);
+              return;
+            }
 
-    await parkingSpaceService.updateAvailability(reservation.parking_space_id, true);
-    return (await this.getReservationById(id))!;
-  },
+            await this.parkingSpaceService.updateAvailability(reservation.parking_space_id, true);
+            const updatedReservation = await this.getReservationById(id);
+            resolve(updatedReservation!);
+          }
+        );
+      }).catch(reject);
+    });
+  }
 
   async cancelReservation(id: number): Promise<boolean> {
-    const db = await getDb();
     const reservation = await this.getReservationById(id);
     if (!reservation) throw new Error('Reservation not found');
     if (reservation.status !== 'active') throw new Error('Reservation is not active');
 
-    const result = await db.run(
-      `UPDATE reservations SET status = 'cancelled', end_time = datetime('now') WHERE id = ?`,
-      [id]
-    );
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        `UPDATE reservations SET status = 'cancelled', end_time = datetime('now') WHERE id = ?`,
+        [id],
+        async function(err: any) {
+          if (err) {
+            reject(err);
+            return;
+          }
 
-    await parkingSpaceService.updateAvailability(reservation.parking_space_id, true);
-    return (result.changes || 0) > 0;
+          await this.parkingSpaceService.updateAvailability(reservation.parking_space_id, true);
+          resolve(this.changes > 0);
+        }.bind({ parkingSpaceService: this.parkingSpaceService })
+      );
+    });
   }
-}; 
+} 

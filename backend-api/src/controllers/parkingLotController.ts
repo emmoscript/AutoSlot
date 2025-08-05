@@ -1,16 +1,23 @@
 import { Request, Response } from 'express';
-import { parkingLotService } from '../services/parkingLotService';
+import { ParkingLotService } from '../services/parkingLotService';
+import { Database } from 'sqlite3';
 
-export const parkingLotController = {
+export class ParkingLotController {
+  private parkingLotService: ParkingLotService;
+
+  constructor(db: Database) {
+    this.parkingLotService = new ParkingLotService(db);
+  }
+
   async getAllLots(req: Request, res: Response): Promise<void> {
     try {
-      const lots = await parkingLotService.getAllLots();
+      const lots = await this.parkingLotService.getAllLots();
       res.status(200).json(lots);
     } catch (error) {
       console.error('Error fetching lots:', error);
       res.status(500).json({ message: 'Error fetching parking lots' });
     }
-  },
+  }
 
   async createLot(req: Request, res: Response): Promise<void> {
     try {
@@ -22,7 +29,7 @@ export const parkingLotController = {
         return;
       }
 
-      const newLot = await parkingLotService.createLot({
+      const newLot = await this.parkingLotService.createLot({
         name,
         address,
         latitude: parseFloat(latitude),
@@ -34,19 +41,19 @@ export const parkingLotController = {
       console.error('Error creating lot:', error);
       res.status(500).json({ message: 'Error creating parking lot' });
     }
-  },
+  }
 
   async getLotDetails(req: Request, res: Response): Promise<void> {
     try {
       const id = parseInt(req.params.id, 10);
-      const lot = await parkingLotService.getLotById(id);
+      const lot = await this.parkingLotService.getLotById(id);
 
       if (!lot) {
         res.status(404).json({ message: 'Parking lot not found' });
         return;
       }
 
-      const spaces = await parkingLotService.getSpacesByLotId(id);
+      const spaces = await this.parkingLotService.getSpacesByLotId(id);
       
       // Aquí podrías calcular el precio actual de cada espacio si fuera necesario
       // Por ahora, lo dejamos simple.
@@ -58,4 +65,4 @@ export const parkingLotController = {
       res.status(500).json({ message: 'Error fetching parking lot details' });
     }
   }
-}; 
+} 

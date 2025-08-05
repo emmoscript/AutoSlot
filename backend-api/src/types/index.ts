@@ -56,10 +56,40 @@ export interface PricingRule {
 }
 
 export interface User {
-  phone: string;
-  name?: string;
-  email?: string;
-  preferred_payment?: string;
+  id: number;
+  name: string;
+  email: string;
+  vehicle_plate?: string;
+  phone?: string;
+  role: 'user' | 'admin';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  vehicle_plate?: string;
+  phone?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user: User;
+  token: string;
+}
+
+export interface JwtPayload {
+  userId: number;
+  email: string;
+  role: string;
 }
 
 export interface SensorEvent {

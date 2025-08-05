@@ -6,7 +6,7 @@ import path from 'path';
 const DB_PATH = path.resolve(__dirname, '../../autoslot.db');
 const INIT_SQL_PATH = path.resolve(__dirname, './init.sql');
 
-export async function getDb(): Promise<Database> {
+export async function getDb(): Promise<sqlite3.Database> {
   const db = await open({
     filename: DB_PATH,
     driver: sqlite3.Database,
@@ -19,5 +19,5 @@ export async function getDb(): Promise<Database> {
     await db.exec(initSql);
   }
 
-  return db;
+  return (db as any).driver;
 } 

@@ -1,14 +1,19 @@
 import { Router } from 'express';
-import parkingLotRoutes from './parkingLotRoutes';
-import parkingSpaceRoutes from './parkingSpaceRoutes';
-import reservationRoutes from './reservationRoutes';
+import createParkingLotRoutes from './parkingLotRoutes';
+import createParkingSpaceRoutes from './parkingSpaceRoutes';
+import createReservationRoutes from './reservationRoutes';
 import sensorRoutes from './sensorRoutes';
+import createAuthRoutes from './authRoutes';
+import { Database } from 'sqlite3';
 
-const router = Router();
+export default function createRoutes(db: Database): Router {
+  const router = Router();
 
-router.use('/lots', parkingLotRoutes);
-router.use('/spaces', parkingSpaceRoutes);
-router.use('/reservations', reservationRoutes);
-router.use('/sensors', sensorRoutes);
+  router.use('/lots', createParkingLotRoutes(db));
+  router.use('/spaces', createParkingSpaceRoutes(db));
+  router.use('/reservations', createReservationRoutes(db));
+  router.use('/sensors', sensorRoutes);
+  router.use('/auth', createAuthRoutes(db));
 
-export default router; 
+  return router;
+} 
