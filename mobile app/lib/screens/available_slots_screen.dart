@@ -5,6 +5,25 @@ import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/screens/payment_screen.dart'; // Import the new payment screen
 import 'package:mobile_app/widget/slot_grid_item.dart'; // Ensure this path is correct
 
+// Slot model for type safety
+class Slot {
+  final String id;
+  final String floor;
+  final bool isAvailable;
+
+  Slot({required this.id, required this.floor, required this.isAvailable});
+
+  factory Slot.fromJson(Map<String, dynamic> json) {
+    return Slot(
+      id: json['id'].toString(),
+      floor: json['floor']?.toString() ?? json['level']?.toString() ?? '',
+      isAvailable:
+          json['isAvailable'] ??
+          json['is_available'] == true || json['is_available'] == 1,
+    );
+  }
+}
+
 class AvailableSlotsScreen extends StatefulWidget {
   final Map<String, dynamic> parking;
   final ScrollController? scrollController; // Added scrollController parameter
@@ -22,15 +41,6 @@ class AvailableSlotsScreen extends StatefulWidget {
 // Added SingleTickerProviderStateMixin for AnimationController
 class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
     with SingleTickerProviderStateMixin {
-  // Random placeholder images for parking lots (if needed, though not directly used in this UI)
-  final List<String> _parkingImages = [
-    'https://placehold.co/600x200/AED6F1/000000?text=Parking+Lot+View+1',
-    'https://placehold.co/600x200/FADBD8/000000?text=Parking+Lot+View+2',
-    'https://placehold.co/600x200/D5F5E3/000000?text=Parking+Lot+View+3',
-    'https://placehold.co/600x200/A9CCE3/000000?text=Parking+Lot+View+4',
-    'https://placehold.co/600x200/FCF3CF/000000?text=Parking+Lot+View+5',
-  ];
-
   final Random _random = Random();
 
   // All possible floors for random generation
@@ -42,8 +52,8 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
   final Set<String> _selectedSlotIds =
       {}; // Stores the IDs of the currently selected slots
 
-  // Store the generated slots once to maintain consistency on rebuilds
-  late List<Map<String, dynamic>> _allGeneratedSlots;
+  // Remove random slot generation and use real slots from API
+  late List<Slot> _allSlots;
 
   // AnimationController and Animation for the button
   late AnimationController _buttonAnimationController;
@@ -52,34 +62,28 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
   @override
   void initState() {
     super.initState();
-    // Initialize available slots only once
-    _allGeneratedSlots = _getInitialSlots();
+    // Use slots from API (passed in widget.parking['slots']) and parse to Slot objects
+    final rawSlots = widget.parking['slots'] ?? [];
+    print('Raw slots data: $rawSlots');
+    _allSlots = rawSlots is List
+        ? rawSlots.map((e) => Slot.fromJson(e as Map<String, dynamic>)).toList()
+        : [];
 
-    // Initialize available floors based on generated slots or actual data
+    // Initialize available floors based on real slots
     _availableFloors =
-        ['All'] +
-              _allGeneratedSlots
-                  .map((slot) => slot['floor'] as String)
-                  .toSet()
-                  .toList()
+        ['All'] + _allSlots.map((slot) => slot.floor).toSet().toList()
           ..sort();
-    _selectedFloor = _availableFloors.first; // Set initial filter to 'All'
+    _selectedFloor = _availableFloors.first;
 
-    // Initialize the AnimationController for the button
     _buttonAnimationController = AnimationController(
-      vsync: this, // 'this' refers to the SingleTickerProviderStateMixin
-      duration: const Duration(milliseconds: 150), // Duration for the animation
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
     );
-
-    // Define the animation: move from its current position to 5% upwards
     _buttonSlideAnimation =
-        Tween<Offset>(
-          begin: Offset.zero, // Start at current position
-          end: const Offset(0.0, -0.1), // Move 10% of its height upwards
-        ).animate(
+        Tween<Offset>(begin: Offset.zero, end: const Offset(0.0, -0.1)).animate(
           CurvedAnimation(
             parent: _buttonAnimationController,
-            curve: Curves.easeOutCubic, // A smooth easing curve
+            curve: Curves.easeOutCubic,
           ),
         );
   }
@@ -91,34 +95,7 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
     super.dispose();
   }
 
-  // Helper function to get initial slots, either from parking data or generated
-  List<Map<String, dynamic>> _getInitialSlots() {
-    List<Map<String, dynamic>> slots = widget.parking['slots'] ?? [];
-    if (slots.isEmpty) {
-      return _generateRandomSlots(15 + _random.nextInt(10));
-    } else {
-      return slots.cast<Map<String, dynamic>>();
-    }
-  }
-
-  // Helper function to generate random slot data
-  List<Map<String, dynamic>> _generateRandomSlots(int count) {
-    final List<Map<String, dynamic>> generatedSlots = [];
-    for (int i = 0; i < count; i++) {
-      final String slotId =
-          '${String.fromCharCode(65 + _random.nextInt(5))}${_random.nextInt(99) + 1}'; // A1-E99
-      final String floor =
-          _allPossibleFloors[_random.nextInt(_allPossibleFloors.length)];
-      final bool isAvailable = _random.nextBool(); // true or false randomly
-
-      generatedSlots.add({
-        'id': slotId,
-        'floor': floor,
-        'isAvailable': isAvailable,
-      });
-    }
-    return generatedSlots;
-  }
+  // Remove _getInitialSlots and _generateRandomSlots, and update all usages to _allSlots
 
   // Function to show the payment screen as a bottom sheet
   void _showPaymentScreen(BuildContext context) {
@@ -181,13 +158,26 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
   @override
   Widget build(BuildContext context) {
     // Filter slots based on selected floor from the consistently stored _allGeneratedSlots
-    final List<Map<String, dynamic>> filteredSlots = _selectedFloor == 'All'
-        ? _allGeneratedSlots
-        : _allGeneratedSlots
-              .where((slot) => slot['floor'] == _selectedFloor)
-              .toList();
+    final List<Slot> filteredSlots = _selectedFloor == 'All'
+        ? _allSlots
+        : _allSlots.where((slot) => slot.floor == _selectedFloor).toList();
 
     debugPrint('Parking info for slots screen: ${widget.parking}');
+
+    bool? lotDisponible = widget.parking['disponible'];
+    if (lotDisponible == null) {
+      // Try to infer from slots
+      if (_allSlots.isNotEmpty) {
+        lotDisponible = _allSlots.any((slot) => slot.isAvailable);
+      }
+    }
+
+    String disponibilidadText;
+    if (lotDisponible == null) {
+      disponibilidadText = 'Desconocido';
+    } else {
+      disponibilidadText = lotDisponible ? 'Disponible' : 'Ocupado';
+    }
 
     return Stack(
       // Changed root to Stack to layer scrollable content and fixed button
@@ -254,17 +244,19 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Servicios: ${widget.parking['servicios'].join(', ')}',
+                      'Servicios: ${(widget.parking['servicios'] ?? []).join(', ')}',
                       style: const TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Disponibilidad: ${widget.parking['disponible'] ? 'Disponible' : 'Ocupado'}',
+                      'Disponibilidad: $disponibilidadText',
                       style: TextStyle(
                         fontSize: 16,
-                        color: widget.parking['disponible']
+                        color: lotDisponible == true
                             ? Colors.green
-                            : Colors.red,
+                            : lotDisponible == false
+                            ? Colors.red
+                            : Colors.grey,
                       ),
                     ),
                   ],
@@ -294,6 +286,7 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
                           urlTemplate:
                               'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                           subdomains: const ['a', 'b', 'c'],
+                          userAgentPackageName: 'com.example.mobile_app',
                         ),
                         MarkerLayer(
                           markers: [
@@ -414,78 +407,65 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
                     ),
                   )
                 : SliverPadding(
-                    // Added SliverPadding to apply padding to the grid
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                    ), // Match original GridView padding
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: 16.0,
                             mainAxisSpacing: 16.0,
-                            childAspectRatio: 1.0, // Ensures square items
+                            childAspectRatio: 1.0,
                           ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final slot =
-                              filteredSlots[index]; // Use filteredSlots here
-                          return SlotGridItem(
-                            key: ValueKey(slot['id']), // <--- Added Key here
-                            slotId: slot['id'] as String,
-                            floor: slot['floor'],
-                            isAvailable: slot['isAvailable'] as bool,
-                            isSelected: _selectedSlotIds.contains(
-                              slot['id'],
-                            ), // Check if ID is in the set
-                            onTap: () {
-                              // Only allow selection if the slot is available
-                              if (slot['isAvailable'] == true) {
-                                setState(() {
-                                  if (_selectedSlotIds.contains(slot['id'])) {
-                                    _selectedSlotIds.remove(
-                                      slot['id'],
-                                    ); // Deselect
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Slot ${slot['id']} deseleccionado.',
-                                        ),
-                                        duration: const Duration(
-                                          milliseconds: 800,
-                                        ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final slot = filteredSlots[index];
+                        return SlotGridItem(
+                          key: ValueKey(slot.id),
+                          slotId: slot.id,
+                          floor: slot.floor,
+                          isAvailable: slot.isAvailable,
+                          isSelected: _selectedSlotIds.contains(slot.id),
+                          onTap: () {
+                            if (slot.isAvailable) {
+                              setState(() {
+                                if (_selectedSlotIds.contains(slot.id)) {
+                                  _selectedSlotIds.remove(slot.id);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Slot ${slot.id} deseleccionado.',
                                       ),
-                                    );
-                                  } else {
-                                    _selectedSlotIds.add(slot['id']); // Select
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Slot ${slot['id']} seleccionado!',
-                                        ),
-                                        duration: const Duration(
-                                          milliseconds: 800,
-                                        ),
+                                      duration: const Duration(
+                                        milliseconds: 800,
                                       ),
-                                    );
-                                  }
-                                });
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Este espacio no está disponible.',
                                     ),
-                                    duration: Duration(milliseconds: 800),
+                                  );
+                                } else {
+                                  _selectedSlotIds.add(slot.id);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Slot ${slot.id} seleccionado!',
+                                      ),
+                                      duration: const Duration(
+                                        milliseconds: 800,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              });
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Este espacio no está disponible.',
                                   ),
-                                );
-                              }
-                            },
-                          );
-                        },
-                        childCount:
-                            filteredSlots.length, // Use filteredSlots length
-                      ),
+                                  duration: Duration(milliseconds: 800),
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      }, childCount: filteredSlots.length),
                     ),
                   ),
             // Added a bottom padding to the CustomScrollView so the content isn't obscured by the floating button

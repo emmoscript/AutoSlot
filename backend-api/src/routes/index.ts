@@ -11,4 +11,4 @@ router.use('/spaces', parkingSpaceRoutes);
 router.use('/reservations', reservationRoutes);
 router.use('/sensors', sensorRoutes);
 
-export default router; 
+export default router;

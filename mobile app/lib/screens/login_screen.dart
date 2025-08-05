@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       final success = AuthService.login(_email, _password);
-      if (success) {
+      if (success == true) {
         Navigator.of(context).pushReplacementNamed('/feed');
       } else {
         setState(() => _error = 'Login incorrecto');
@@ -37,12 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment
                 .center, // Keeps the rest of the content centered
             children: [
-              Icon(
-          Icons.local_parking,
-          size: 80,
-          color: Colors.blue,
-              ),
-        SizedBox(height: 16), // Add some spacing after the icon
+              Icon(Icons.local_parking, size: 80, color: Colors.blue),
+              SizedBox(height: 16), // Add some spacing after the icon
               Text(
                 "Iniciar Sessión",
                 style: const TextStyle(
