@@ -1,9 +1,20 @@
 import { Request, Response } from 'express';
-import { parkingSpaceService } from '../services/parkingSpaceService';
-import { parkingLotService } from '../services/parkingLotService';
+import { ParkingSpaceService } from '../services/parkingSpaceService';
+import { ParkingLotService } from '../services/parkingLotService';
 import { ParkingSpace } from '../types';
+import { Database } from 'sqlite3';
+
+// Create service instances
+let parkingSpaceService: ParkingSpaceService;
+let parkingLotService: ParkingLotService;
 
 export const sensorController = {
+  // Initialize services with database instance
+  initialize(db: Database) {
+    parkingSpaceService = new ParkingSpaceService(db);
+    parkingLotService = new ParkingLotService(db);
+  },
+
   // Simular un evento de sensor específico
   async simulateSensorEvent(req: Request, res: Response): Promise<void> {
     try {

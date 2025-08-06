@@ -40,7 +40,7 @@ export class AuthService {
               `INSERT INTO users (name, email, password_hash, vehicle_plate, phone, role) 
                VALUES (?, ?, ?, ?, ?, 'user')`,
               [userData.name, userData.email, passwordHash, userData.vehicle_plate, userData.phone],
-              function(err) {
+              function(this: any, err: any) {
                 if (err) {
                   reject(err);
                   return;
@@ -50,7 +50,7 @@ export class AuthService {
                 this.db.get(
                   'SELECT * FROM users WHERE id = ?',
                   [this.lastID],
-                  (err, user) => {
+                  (err: any, user: any) => {
                     if (err) {
                       reject(err);
                       return;
@@ -70,7 +70,7 @@ export class AuthService {
                     });
                   }
                 );
-              }
+              }.bind({ db: this.db })
             );
           } catch (error) {
             reject(error);
@@ -211,7 +211,7 @@ export class AuthService {
       this.db.run(
         `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
         values,
-        function(err) {
+        function(this: any, err: any) {
           if (err) {
             reject(err);
             return;
@@ -226,7 +226,7 @@ export class AuthService {
           this.db.get(
             'SELECT id, name, email, vehicle_plate, phone, role, is_active, created_at, updated_at FROM users WHERE id = ?',
             [userId],
-            (err, user) => {
+            (err: any, user: any) => {
               if (err) {
                 reject(err);
                 return;
@@ -234,7 +234,7 @@ export class AuthService {
               resolve(user as User);
             }
           );
-        }
+        }.bind({ db: this.db })
       );
     });
   }

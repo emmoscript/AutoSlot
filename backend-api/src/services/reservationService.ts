@@ -115,7 +115,7 @@ export class ReservationService {
             data.estimated_duration,
             totalCost,
             data.license_plate || null
-          ], async function(err: any) {
+          ], async function(this: any, err: any) {
             if (err) {
               reject(err);
               return;
@@ -176,7 +176,7 @@ export class ReservationService {
         this.db.run(
           `UPDATE reservations SET end_time = ?, actual_duration = ?, total_cost = ?, status = 'completed' WHERE id = ?`,
           [now.toISOString(), actualDuration, finalCost, id],
-          async (err) => {
+          async function(this: any, err: any) {
             if (err) {
               reject(err);
               return;
@@ -185,7 +185,10 @@ export class ReservationService {
             await this.parkingSpaceService.updateAvailability(reservation.parking_space_id, true);
             const updatedReservation = await this.getReservationById(id);
             resolve(updatedReservation!);
-          }
+          }.bind({ 
+            parkingSpaceService: this.parkingSpaceService,
+            getReservationById: this.getReservationById.bind(this)
+          })
         );
       }).catch(reject);
     });
@@ -200,7 +203,7 @@ export class ReservationService {
       this.db.run(
         `UPDATE reservations SET status = 'cancelled', end_time = datetime('now') WHERE id = ?`,
         [id],
-        async function(err: any) {
+        async function(this: any, err: any) {
           if (err) {
             reject(err);
             return;

@@ -11,33 +11,36 @@ export class AuthController {
   }
 
   // POST /auth/register
-  async register(req: Request, res: Response) {
+  async register(req: Request, res: Response): Promise<void> {
     try {
       const userData: RegisterRequest = req.body;
 
       // Validate required fields
       if (!userData.name || !userData.email || !userData.password) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'Name, email and password are required'
         });
+        return;
       }
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(userData.email)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'Invalid email format'
         });
+        return;
       }
 
       // Validate password length
       if (userData.password.length < 6) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'Password must be at least 6 characters long'
         });
+        return;
       }
 
       const result = await this.authService.register(userData);
@@ -52,16 +55,17 @@ export class AuthController {
   }
 
   // POST /auth/login
-  async login(req: Request, res: Response) {
+  async login(req: Request, res: Response): Promise<void> {
     try {
       const credentials: LoginRequest = req.body;
 
       // Validate required fields
       if (!credentials.email || !credentials.password) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'Email and password are required'
         });
+        return;
       }
 
       const result = await this.authService.login(credentials);
@@ -76,24 +80,26 @@ export class AuthController {
   }
 
   // GET /auth/me
-  async getCurrentUser(req: Request, res: Response) {
+  async getCurrentUser(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.userId;
       
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Authentication required'
         });
+        return;
       }
 
       const user = await this.authService.getUserById(userId);
       
       if (!user) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'User not found'
         });
+        return;
       }
 
       res.json({
@@ -110,15 +116,16 @@ export class AuthController {
   }
 
   // GET /auth/users (admin only)
-  async getAllUsers(req: Request, res: Response) {
+  async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
       const userRole = (req as any).user?.role;
       
       if (userRole !== 'admin') {
-        return res.status(403).json({
+        res.status(403).json({
           success: false,
           message: 'Admin access required'
         });
+        return;
       }
 
       const users = await this.authService.getAllUsers();
@@ -136,15 +143,16 @@ export class AuthController {
   }
 
   // PUT /auth/profile
-  async updateProfile(req: Request, res: Response) {
+  async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.userId;
       
       if (!userId) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'Authentication required'
         });
+        return;
       }
 
       const updates = req.body;
@@ -161,10 +169,11 @@ export class AuthController {
       const updatedUser = await this.authService.updateUser(userId, filteredUpdates);
       
       if (!updatedUser) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'User not found'
         });
+        return;
       }
 
       res.json({
@@ -181,7 +190,7 @@ export class AuthController {
   }
 
   // POST /auth/logout
-  async logout(req: Request, res: Response) {
+  async logout(req: Request, res: Response): Promise<void> {
     // Since we're using JWT, logout is handled client-side by removing the token
     // This endpoint is for consistency and future server-side token blacklisting
     res.json({

@@ -1,15 +1,21 @@
 import { Router } from 'express';
 import { sensorController } from '../controllers/sensorController';
+import { Database } from 'sqlite3';
 
-const router = Router();
+export default function createSensorRoutes(db: Database): Router {
+  const router = Router();
 
-// Simular evento de sensor (vehículo entra/sale)
-router.post('/trigger', sensorController.simulateSensorEvent);
+  // Initialize the controller with database
+  sensorController.initialize(db);
 
-// Obtener estado actual de todos los sensores
-router.get('/status', sensorController.getSensorStatus);
+  // Simular evento de sensor (vehículo entra/sale)
+  router.post('/trigger', sensorController.simulateSensorEvent);
 
-// Simular múltiples eventos aleatorios
-router.post('/simulate-random', sensorController.simulateRandomEvents);
+  // Obtener estado actual de todos los sensores
+  router.get('/status', sensorController.getSensorStatus);
 
-export default router; 
+  // Simular múltiples eventos aleatorios
+  router.post('/simulate-random', sensorController.simulateRandomEvents);
+
+  return router;
+} 
