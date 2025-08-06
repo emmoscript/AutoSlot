@@ -36,23 +36,31 @@ export class AuthService {
             const passwordHash = await bcrypt.hash(userData.password, saltRounds);
 
             // Insert new user
-            this.db.run(
-              `INSERT INTO users (name, email, password_hash, vehicle_plate, phone, role) 
-               VALUES (?, ?, ?, ?, ?, 'user')`,
-              [userData.name, userData.email, passwordHash, userData.vehicle_plate, userData.phone],
-              function(this: any, err: any) {
+            const db = this.db; // Store reference outside callback
+            db.run(
+              `INSERT INTO users (name, email, password_hash, vehicle_plate, vehicle_brand, vehicle_model, vehicle_color, phone, role) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'user')`,
+              [userData.name, userData.email, passwordHash, userData.vehicle_plate, userData.vehicle_brand, userData.vehicle_model, userData.vehicle_color, userData.phone],
+              function(err: any) {
                 if (err) {
                   reject(err);
                   return;
                 }
 
-                // Get the created user using the class db instance
-                this.db.get(
+                const lastID = this.lastID; // Now this refers to the db run result
+                
+                // Get the created user
+                db.get(
                   'SELECT * FROM users WHERE id = ?',
-                  [this.lastID],
+                  [lastID],
                   (err: any, user: any) => {
                     if (err) {
                       reject(err);
+                      return;
+                    }
+
+                    if (!user) {
+                      reject(new Error('Failed to retrieve created user'));
                       return;
                     }
 
@@ -63,14 +71,17 @@ export class AuthService {
                       { expiresIn: JWT_EXPIRES_IN }
                     );
 
+                    // Remove password_hash from response
+                    const { password_hash, ...userWithoutPassword } = user;
+
                     resolve({
                       success: true,
-                      user: user as User,
+                      user: userWithoutPassword as User,
                       token
                     });
                   }
                 );
-              }.bind({ db: this.db })
+              }
             );
           } catch (error) {
             reject(error);
@@ -82,28 +93,38 @@ export class AuthService {
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     return new Promise((resolve, reject) => {
+      console.log(`🔍 Login attempt for: ${credentials.email}`);
       this.db.get(
         'SELECT * FROM users WHERE email = ? AND is_active = 1',
         [credentials.email],
         async (err, user: any) => {
           if (err) {
+            console.log(`❌ Database error: ${err}`);
             reject(err);
             return;
           }
 
           if (!user) {
+            console.log(`❌ User not found: ${credentials.email}`);
             reject(new Error('Invalid credentials'));
             return;
           }
 
+          console.log(`✅ User found: ${user.email}, checking password...`);
+
           try {
             // Verify password
+            console.log(`🔐 Comparing password for ${user.email}`);
             const isValidPassword = await bcrypt.compare(credentials.password, user.password_hash);
+            console.log(`🔐 Password comparison result: ${isValidPassword}`);
             
             if (!isValidPassword) {
+              console.log(`❌ Invalid password for: ${credentials.email}`);
               reject(new Error('Invalid credentials'));
               return;
             }
+
+            console.log(`✅ Login successful for: ${credentials.email}`);
 
             // Generate JWT token
             const token = jwt.sign(
@@ -131,7 +152,7 @@ export class AuthService {
   async getUserById(userId: number): Promise<User | null> {
     return new Promise((resolve, reject) => {
       this.db.get(
-        'SELECT id, name, email, vehicle_plate, phone, role, is_active, created_at, updated_at FROM users WHERE id = ? AND is_active = 1',
+        'SELECT id, name, email, vehicle_plate, vehicle_brand, vehicle_model, vehicle_color, phone, role, is_active, created_at, updated_at FROM users WHERE id = ? AND is_active = 1',
         [userId],
         (err, user) => {
           if (err) {
@@ -147,7 +168,7 @@ export class AuthService {
   async getUserByEmail(email: string): Promise<User | null> {
     return new Promise((resolve, reject) => {
       this.db.get(
-        'SELECT id, name, email, vehicle_plate, phone, role, is_active, created_at, updated_at FROM users WHERE email = ? AND is_active = 1',
+        'SELECT id, name, email, vehicle_plate, vehicle_brand, vehicle_model, vehicle_color, phone, role, is_active, created_at, updated_at FROM users WHERE email = ? AND is_active = 1',
         [email],
         (err, user) => {
           if (err) {
@@ -171,7 +192,7 @@ export class AuthService {
   async getAllUsers(): Promise<User[]> {
     return new Promise((resolve, reject) => {
       this.db.all(
-        'SELECT id, name, email, vehicle_plate, phone, role, is_active, created_at, updated_at FROM users WHERE is_active = 1 ORDER BY created_at DESC',
+        'SELECT id, name, email, vehicle_plate, vehicle_brand, vehicle_model, vehicle_color, phone, role, is_active, created_at, updated_at FROM users WHERE is_active = 1 ORDER BY created_at DESC',
         (err, users) => {
           if (err) {
             reject(err);
@@ -195,6 +216,18 @@ export class AuthService {
       if (updates.vehicle_plate !== undefined) {
         updateFields.push('vehicle_plate = ?');
         values.push(updates.vehicle_plate);
+      }
+      if (updates.vehicle_brand !== undefined) {
+        updateFields.push('vehicle_brand = ?');
+        values.push(updates.vehicle_brand);
+      }
+      if (updates.vehicle_model !== undefined) {
+        updateFields.push('vehicle_model = ?');
+        values.push(updates.vehicle_model);
+      }
+      if (updates.vehicle_color !== undefined) {
+        updateFields.push('vehicle_color = ?');
+        values.push(updates.vehicle_color);
       }
       if (updates.phone !== undefined) {
         updateFields.push('phone = ?');
@@ -224,7 +257,7 @@ export class AuthService {
 
           // Get updated user using the class db instance
           this.db.get(
-            'SELECT id, name, email, vehicle_plate, phone, role, is_active, created_at, updated_at FROM users WHERE id = ?',
+            'SELECT id, name, email, vehicle_plate, vehicle_brand, vehicle_model, vehicle_color, phone, role, is_active, created_at, updated_at FROM users WHERE id = ?',
             [userId],
             (err: any, user: any) => {
               if (err) {

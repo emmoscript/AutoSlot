@@ -20,8 +20,8 @@ const seedData: SeedLot[] = [
   {
     name: "Acrópolis Center",
     address: "Av. Winston Churchill, Santo Domingo",
-    latitude: 18.4861,
-    longitude: -69.9312,
+    latitude: 18.469696652249976,
+    longitude: -69.93889928441415,
     levels: [
       {
         level: 1,
@@ -67,9 +67,9 @@ const seedData: SeedLot[] = [
   },
   {
     name: "Blue Mall",
-    address: "Av. Sarasota, Santo Domingo",
-    latitude: 18.4567,
-    longitude: -69.9289,
+    address: "Av. Winston Churchill 95, Santo Domingo",
+    latitude: 18.472753961844596,
+    longitude: -69.94094768697278,
     levels: [
       {
         level: 1,
@@ -145,8 +145,8 @@ const seedData: SeedLot[] = [
   {
     name: "Galería 360",
     address: "Av. John F. Kennedy, Santo Domingo",
-    latitude: 18.4678,
-    longitude: -69.9315,
+    latitude: 18.485148365348184,
+    longitude: -69.93605272780678,
     levels: [
       {
         level: 1,
@@ -282,6 +282,150 @@ const seedData: SeedLot[] = [
           { name: "E8", zone_type: "economy", base_price: 73, is_available: false },
           { name: "E9", zone_type: "economy", base_price: 73, is_available: true },
           { name: "E10", zone_type: "economy", base_price: 73, is_available: true },
+        ]
+      }
+    ]
+  },
+  {
+    name: "Sambil",
+    address: "Av. John F. Kennedy, Santo Domingo",
+    latitude: 18.482132299972495,
+    longitude: -69.91160917434281,
+    levels: [
+      {
+        level: 1,
+        spaces: [
+          { name: "S1-01", zone_type: "premium", base_price: 60, is_available: true },
+          { name: "S1-02", zone_type: "premium", base_price: 60, is_available: false },
+          { name: "S1-03", zone_type: "premium", base_price: 60, is_available: true },
+          { name: "S1-04", zone_type: "premium", base_price: 60, is_available: true },
+          { name: "S1-05", zone_type: "premium", base_price: 60, is_available: false },
+          { name: "S1-06", zone_type: "premium", base_price: 60, is_available: true },
+          { name: "S1-07", zone_type: "premium", base_price: 60, is_available: true },
+          { name: "S1-08", zone_type: "premium", base_price: 60, is_available: true },
+          { name: "S1-09", zone_type: "premium", base_price: 60, is_available: false },
+          { name: "S1-10", zone_type: "premium", base_price: 60, is_available: true },
+        ]
+      },
+      {
+        level: 2,
+        spaces: [
+          { name: "S2-01", zone_type: "standard", base_price: 50, is_available: true },
+          { name: "S2-02", zone_type: "standard", base_price: 50, is_available: true },
+          { name: "S2-03", zone_type: "standard", base_price: 50, is_available: false },
+          { name: "S2-04", zone_type: "standard", base_price: 50, is_available: true },
+          { name: "S2-05", zone_type: "standard", base_price: 50, is_available: true },
+          { name: "S2-06", zone_type: "standard", base_price: 50, is_available: true },
+          { name: "S2-07", zone_type: "standard", base_price: 50, is_available: false },
+          { name: "S2-08", zone_type: "standard", base_price: 50, is_available: true },
+          { name: "S2-09", zone_type: "standard", base_price: 50, is_available: true },
+          { name: "S2-10", zone_type: "standard", base_price: 50, is_available: true },
+        ]
+      },
+      {
+        level: 3,
+        spaces: [
+          { name: "S3-01", zone_type: "economy", base_price: 40, is_available: true },
+          { name: "S3-02", zone_type: "economy", base_price: 40, is_available: true },
+          { name: "S3-03", zone_type: "economy", base_price: 40, is_available: false },
+          { name: "S3-04", zone_type: "economy", base_price: 40, is_available: true },
+          { name: "S3-05", zone_type: "economy", base_price: 40, is_available: true },
+          { name: "S3-06", zone_type: "economy", base_price: 40, is_available: true },
+          { name: "S3-07", zone_type: "economy", base_price: 40, is_available: true },
+          { name: "S3-08", zone_type: "economy", base_price: 40, is_available: false },
+          { name: "S3-09", zone_type: "economy", base_price: 40, is_available: true },
+          { name: "S3-10", zone_type: "economy", base_price: 40, is_available: true },
+        ]
+      }
+    ]
+  },
+  {
+    name: "Bella Vista Mall",
+    address: "Av. Sarasota, Santo Domingo",
+    latitude: 18.452880237461944,
+    longitude: -69.94232660823761,
+    levels: [
+      {
+        level: 1,
+        spaces: [
+          { name: "BV1-01", zone_type: "premium", base_price: 55, is_available: true },
+          { name: "BV1-02", zone_type: "premium", base_price: 55, is_available: true },
+          { name: "BV1-03", zone_type: "premium", base_price: 55, is_available: false },
+          { name: "BV1-04", zone_type: "premium", base_price: 55, is_available: true },
+          { name: "BV1-05", zone_type: "premium", base_price: 55, is_available: true },
+          { name: "BV1-06", zone_type: "premium", base_price: 55, is_available: true },
+          { name: "BV1-07", zone_type: "premium", base_price: 55, is_available: false },
+          { name: "BV1-08", zone_type: "premium", base_price: 55, is_available: true },
+          { name: "BV1-09", zone_type: "premium", base_price: 55, is_available: true },
+          { name: "BV1-10", zone_type: "premium", base_price: 55, is_available: true },
+        ]
+      },
+      {
+        level: 2,
+        spaces: [
+          { name: "BV2-01", zone_type: "standard", base_price: 45, is_available: true },
+          { name: "BV2-02", zone_type: "standard", base_price: 45, is_available: false },
+          { name: "BV2-03", zone_type: "standard", base_price: 45, is_available: true },
+          { name: "BV2-04", zone_type: "standard", base_price: 45, is_available: true },
+          { name: "BV2-05", zone_type: "standard", base_price: 45, is_available: true },
+          { name: "BV2-06", zone_type: "standard", base_price: 45, is_available: true },
+          { name: "BV2-07", zone_type: "standard", base_price: 45, is_available: true },
+          { name: "BV2-08", zone_type: "standard", base_price: 45, is_available: false },
+          { name: "BV2-09", zone_type: "standard", base_price: 45, is_available: true },
+          { name: "BV2-10", zone_type: "standard", base_price: 45, is_available: true },
+        ]
+      }
+    ]
+  },
+  {
+    name: "Megacentro",
+    address: "Av. John F. Kennedy, Santo Domingo",
+    latitude: 18.506081733463038,
+    longitude: -69.85654929563906,
+    levels: [
+      {
+        level: 1,
+        spaces: [
+          { name: "MC1-01", zone_type: "premium", base_price: 50, is_available: true },
+          { name: "MC1-02", zone_type: "premium", base_price: 50, is_available: true },
+          { name: "MC1-03", zone_type: "premium", base_price: 50, is_available: true },
+          { name: "MC1-04", zone_type: "premium", base_price: 50, is_available: false },
+          { name: "MC1-05", zone_type: "premium", base_price: 50, is_available: true },
+          { name: "MC1-06", zone_type: "premium", base_price: 50, is_available: true },
+          { name: "MC1-07", zone_type: "premium", base_price: 50, is_available: true },
+          { name: "MC1-08", zone_type: "premium", base_price: 50, is_available: true },
+          { name: "MC1-09", zone_type: "premium", base_price: 50, is_available: false },
+          { name: "MC1-10", zone_type: "premium", base_price: 50, is_available: true },
+        ]
+      },
+      {
+        level: 2,
+        spaces: [
+          { name: "MC2-01", zone_type: "standard", base_price: 40, is_available: true },
+          { name: "MC2-02", zone_type: "standard", base_price: 40, is_available: true },
+          { name: "MC2-03", zone_type: "standard", base_price: 40, is_available: false },
+          { name: "MC2-04", zone_type: "standard", base_price: 40, is_available: true },
+          { name: "MC2-05", zone_type: "standard", base_price: 40, is_available: true },
+          { name: "MC2-06", zone_type: "standard", base_price: 40, is_available: true },
+          { name: "MC2-07", zone_type: "standard", base_price: 40, is_available: true },
+          { name: "MC2-08", zone_type: "standard", base_price: 40, is_available: false },
+          { name: "MC2-09", zone_type: "standard", base_price: 40, is_available: true },
+          { name: "MC2-10", zone_type: "standard", base_price: 40, is_available: true },
+        ]
+      },
+      {
+        level: 3,
+        spaces: [
+          { name: "MC3-01", zone_type: "economy", base_price: 30, is_available: true },
+          { name: "MC3-02", zone_type: "economy", base_price: 30, is_available: true },
+          { name: "MC3-03", zone_type: "economy", base_price: 30, is_available: true },
+          { name: "MC3-04", zone_type: "economy", base_price: 30, is_available: false },
+          { name: "MC3-05", zone_type: "economy", base_price: 30, is_available: true },
+          { name: "MC3-06", zone_type: "economy", base_price: 30, is_available: true },
+          { name: "MC3-07", zone_type: "economy", base_price: 30, is_available: true },
+          { name: "MC3-08", zone_type: "economy", base_price: 30, is_available: true },
+          { name: "MC3-09", zone_type: "economy", base_price: 30, is_available: false },
+          { name: "MC3-10", zone_type: "economy", base_price: 30, is_available: true },
         ]
       }
     ]

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/widget/news_card.dart';
 import 'package:mobile_app/widget/search_parking_button.dart';
+import '../main.dart';
 
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
@@ -72,14 +74,20 @@ class FeedScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Hola, Juan Pérez.',
-                        style: TextStyle(
-                          fontSize:
-                              28 * MediaQuery.of(context).textScaler.scale(1),
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      Consumer<UserProvider>(
+                        builder: (context, userProvider, child) {
+                          final userName = userProvider.user?.name ?? 'Usuario';
+                          final firstName = userName.split(' ').first;
+                          return Text(
+                            'Hola, $firstName.',
+                            style: TextStyle(
+                              fontSize:
+                                  28 * MediaQuery.of(context).textScaler.scale(1),
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -431,27 +439,32 @@ class _UserDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          UserAccountsDrawerHeader(
-            accountName: Text(
-              'Juan Pérez',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20 * MediaQuery.of(context).textScaler.scale(1),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            accountEmail: Text(
-              'juan.perez@example.com',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14 * MediaQuery.of(context).textScaler.scale(1),
-              ),
-            ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 40, color: Colors.blue.shade700),
-            ),
-            decoration: BoxDecoration(color: Colors.blue.shade700),
+          Consumer<UserProvider>(
+            builder: (context, userProvider, child) {
+              final user = userProvider.user;
+              return UserAccountsDrawerHeader(
+                accountName: Text(
+                  user?.name ?? 'Usuario',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20 * MediaQuery.of(context).textScaler.scale(1),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                accountEmail: Text(
+                  user?.email ?? 'email@example.com',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14 * MediaQuery.of(context).textScaler.scale(1),
+                  ),
+                ),
+                currentAccountPicture: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, size: 40, color: Colors.blue.shade700),
+                ),
+                decoration: BoxDecoration(color: Colors.blue.shade700),
+              );
+            },
           ),
           ListTile(
             leading: Icon(
@@ -527,11 +540,20 @@ class _UserDrawer extends StatelessWidget {
                 color: Colors.red.shade600,
               ),
             ),
-            onTap: () {
+            onTap: () async {
               Navigator.of(context).pop();
+              
+              // Show loading
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Cerrando sesión...')),
               );
+              
+              // Logout
+              final userProvider = Provider.of<UserProvider>(context, listen: false);
+              await userProvider.logout();
+              
+              // Navigate to login
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
             },
           ),
         ],

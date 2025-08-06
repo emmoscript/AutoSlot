@@ -7,13 +7,21 @@ import { Database } from 'sqlite3';
 import { getDb } from './database';
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = parseInt(process.env.PORT || '4000', 10);
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Middlewares de seguridad y configuración
-app.use(cors());
+app.use(cors({
+  origin: NODE_ENV === 'production' ? '*' : true,
+  credentials: true
+}));
 app.use(helmet());
 app.use(express.json());
-app.use(rateLimit({ windowMs: 60 * 1000, max: 100, message: "Too many requests, please try again later."}));
+app.use(rateLimit({ 
+  windowMs: 60 * 1000, 
+  max: NODE_ENV === 'production' ? 200 : 100, 
+  message: "Too many requests, please try again later."
+}));
 
 // Initialize database and create routes
 let db: Database;
@@ -44,10 +52,12 @@ async function startServer() {
       res.status(200).json({ status: 'UP' });
     });
 
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚗 AutoSlot API v1.2.0 listening on port ${PORT}`);
       console.log(`🔗 Local endpoint: http://localhost:${PORT}`);
       console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
+      console.log(`🌐 Network accessible at: http://0.0.0.0:${PORT}`);
+      console.log(`📱 Mobile app should use: http://10.0.2.2:${PORT} (Android emulator)`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

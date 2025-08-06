@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,15 +14,30 @@ class _LoginScreenState extends State<LoginScreen> {
   String _email = '';
   String _password = '';
   String? _error;
+  bool _isLoading = false;
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      final success = AuthService.login(_email, _password);
-      if (success == true) {
-        Navigator.of(context).pushReplacementNamed('/feed');
-      } else {
-        setState(() => _error = 'Login incorrecto');
+      setState(() {
+        _error = null;
+        _isLoading = true;
+      });
+      
+      try {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final success = await userProvider.login(_email, _password);
+        
+        if (success) {
+          // Login successful, navigate to main app
+          Navigator.of(context).pushReplacementNamed('/feed');
+        } else {
+          setState(() => _error = 'Login incorrecto');
+        }
+      } catch (e) {
+        setState(() => _error = 'Error de conexión: ${e.toString()}');
+      } finally {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -68,7 +84,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(_error!, style: const TextStyle(color: Colors.red)),
               ],
               const SizedBox(height: 24),
-              ElevatedButton(onPressed: _login, child: const Text('Entrar')),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                child: _isLoading 
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Entrar'),
+              ),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => Navigator.of(context).pushNamed('/register'),

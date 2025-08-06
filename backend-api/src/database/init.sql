@@ -16,6 +16,9 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     vehicle_plate TEXT,
+    vehicle_brand TEXT,
+    vehicle_model TEXT,
+    vehicle_color TEXT,
     phone TEXT,
     role TEXT DEFAULT 'user' CHECK(role IN ('user', 'admin')),
     is_active BOOLEAN DEFAULT TRUE,
@@ -98,9 +101,12 @@ CREATE INDEX idx_users_phone ON users(phone);
 
 -- Datos de ejemplo
 INSERT INTO parking_lots (name, address, latitude, longitude) VALUES
-('Acrópolis Center', 'Av. Winston Churchill, Santo Domingo', 18.4682, -69.9392),
-('Blue Mall', 'Av. Winston Churchill 95, Santo Domingo', 18.4627, -69.9405),
-('Galería 360', 'Av. John F. Kennedy, Santo Domingo', 18.4873, -69.9401);
+('Acrópolis Center', 'Av. Winston Churchill, Santo Domingo', 18.469696652249976, -69.93889928441415),
+('Blue Mall', 'Av. Winston Churchill 95, Santo Domingo', 18.472753961844596, -69.94094768697278),
+('Galería 360', 'Av. John F. Kennedy, Santo Domingo', 18.485148365348184, -69.93605272780678),
+('Sambil', 'Av. John F. Kennedy, Santo Domingo', 18.482132299972495, -69.91160917434281),
+('Bella Vista Mall', 'Av. Sarasota, Santo Domingo', 18.452880237461944, -69.94232660823761),
+('Megacentro', 'Av. John F. Kennedy, Santo Domingo', 18.506081733463038, -69.85654929563906);
 
 -- Usuarios de ejemplo (password: 'password123' hasheado)
 INSERT INTO users (name, email, password_hash, vehicle_plate, phone, role) VALUES
@@ -338,6 +344,170 @@ INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
 (3, 'N2-48', 2, 45.00, 'standard'),
 (3, 'N2-49', 2, 45.00, 'standard'),
 (3, 'N2-50', 2, 45.00, 'standard');
+
+-- Espacios para Sambil (Lote 4) - Nivel 1 (Premium)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(4, 'S1-01', 1, 60.00, 'premium'),
+(4, 'S1-02', 1, 60.00, 'premium'),
+(4, 'S1-03', 1, 60.00, 'premium'),
+(4, 'S1-04', 1, 60.00, 'premium'),
+(4, 'S1-05', 1, 60.00, 'premium'),
+(4, 'S1-06', 1, 60.00, 'premium'),
+(4, 'S1-07', 1, 60.00, 'premium'),
+(4, 'S1-08', 1, 60.00, 'premium'),
+(4, 'S1-09', 1, 60.00, 'premium'),
+(4, 'S1-10', 1, 60.00, 'premium'),
+(4, 'S1-11', 1, 60.00, 'premium'),
+(4, 'S1-12', 1, 60.00, 'premium'),
+(4, 'S1-13', 1, 60.00, 'premium'),
+(4, 'S1-14', 1, 60.00, 'premium'),
+(4, 'S1-15', 1, 60.00, 'premium'),
+(4, 'S1-16', 1, 60.00, 'premium'),
+(4, 'S1-17', 1, 60.00, 'premium'),
+(4, 'S1-18', 1, 60.00, 'premium'),
+(4, 'S1-19', 1, 60.00, 'premium'),
+(4, 'S1-20', 1, 60.00, 'premium');
+
+-- Espacios para Sambil (Lote 4) - Nivel 2 (Standard)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(4, 'S2-01', 2, 50.00, 'standard'),
+(4, 'S2-02', 2, 50.00, 'standard'),
+(4, 'S2-03', 2, 50.00, 'standard'),
+(4, 'S2-04', 2, 50.00, 'standard'),
+(4, 'S2-05', 2, 50.00, 'standard'),
+(4, 'S2-06', 2, 50.00, 'standard'),
+(4, 'S2-07', 2, 50.00, 'standard'),
+(4, 'S2-08', 2, 50.00, 'standard'),
+(4, 'S2-09', 2, 50.00, 'standard'),
+(4, 'S2-10', 2, 50.00, 'standard'),
+(4, 'S2-11', 2, 50.00, 'standard'),
+(4, 'S2-12', 2, 50.00, 'standard'),
+(4, 'S2-13', 2, 50.00, 'standard'),
+(4, 'S2-14', 2, 50.00, 'standard'),
+(4, 'S2-15', 2, 50.00, 'standard'),
+(4, 'S2-16', 2, 50.00, 'standard'),
+(4, 'S2-17', 2, 50.00, 'standard'),
+(4, 'S2-18', 2, 50.00, 'standard'),
+(4, 'S2-19', 2, 50.00, 'standard'),
+(4, 'S2-20', 2, 50.00, 'standard');
+
+-- Espacios para Sambil (Lote 4) - Nivel 3 (Economy)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(4, 'S3-01', 3, 40.00, 'economy'),
+(4, 'S3-02', 3, 40.00, 'economy'),
+(4, 'S3-03', 3, 40.00, 'economy'),
+(4, 'S3-04', 3, 40.00, 'economy'),
+(4, 'S3-05', 3, 40.00, 'economy'),
+(4, 'S3-06', 3, 40.00, 'economy'),
+(4, 'S3-07', 3, 40.00, 'economy'),
+(4, 'S3-08', 3, 40.00, 'economy'),
+(4, 'S3-09', 3, 40.00, 'economy'),
+(4, 'S3-10', 3, 40.00, 'economy'),
+(4, 'S3-11', 3, 40.00, 'economy'),
+(4, 'S3-12', 3, 40.00, 'economy'),
+(4, 'S3-13', 3, 40.00, 'economy'),
+(4, 'S3-14', 3, 40.00, 'economy'),
+(4, 'S3-15', 3, 40.00, 'economy');
+
+-- Espacios para Bella Vista Mall (Lote 5) - Nivel 1 (Premium)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(5, 'BV1-01', 1, 55.00, 'premium'),
+(5, 'BV1-02', 1, 55.00, 'premium'),
+(5, 'BV1-03', 1, 55.00, 'premium'),
+(5, 'BV1-04', 1, 55.00, 'premium'),
+(5, 'BV1-05', 1, 55.00, 'premium'),
+(5, 'BV1-06', 1, 55.00, 'premium'),
+(5, 'BV1-07', 1, 55.00, 'premium'),
+(5, 'BV1-08', 1, 55.00, 'premium'),
+(5, 'BV1-09', 1, 55.00, 'premium'),
+(5, 'BV1-10', 1, 55.00, 'premium'),
+(5, 'BV1-11', 1, 55.00, 'premium'),
+(5, 'BV1-12', 1, 55.00, 'premium'),
+(5, 'BV1-13', 1, 55.00, 'premium'),
+(5, 'BV1-14', 1, 55.00, 'premium'),
+(5, 'BV1-15', 1, 55.00, 'premium');
+
+-- Espacios para Bella Vista Mall (Lote 5) - Nivel 2 (Standard)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(5, 'BV2-01', 2, 45.00, 'standard'),
+(5, 'BV2-02', 2, 45.00, 'standard'),
+(5, 'BV2-03', 2, 45.00, 'standard'),
+(5, 'BV2-04', 2, 45.00, 'standard'),
+(5, 'BV2-05', 2, 45.00, 'standard'),
+(5, 'BV2-06', 2, 45.00, 'standard'),
+(5, 'BV2-07', 2, 45.00, 'standard'),
+(5, 'BV2-08', 2, 45.00, 'standard'),
+(5, 'BV2-09', 2, 45.00, 'standard'),
+(5, 'BV2-10', 2, 45.00, 'standard'),
+(5, 'BV2-11', 2, 45.00, 'standard'),
+(5, 'BV2-12', 2, 45.00, 'standard'),
+(5, 'BV2-13', 2, 45.00, 'standard'),
+(5, 'BV2-14', 2, 45.00, 'standard'),
+(5, 'BV2-15', 2, 45.00, 'standard');
+
+-- Espacios para Megacentro (Lote 6) - Nivel 1 (Premium)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(6, 'MC1-01', 1, 50.00, 'premium'),
+(6, 'MC1-02', 1, 50.00, 'premium'),
+(6, 'MC1-03', 1, 50.00, 'premium'),
+(6, 'MC1-04', 1, 50.00, 'premium'),
+(6, 'MC1-05', 1, 50.00, 'premium'),
+(6, 'MC1-06', 1, 50.00, 'premium'),
+(6, 'MC1-07', 1, 50.00, 'premium'),
+(6, 'MC1-08', 1, 50.00, 'premium'),
+(6, 'MC1-09', 1, 50.00, 'premium'),
+(6, 'MC1-10', 1, 50.00, 'premium'),
+(6, 'MC1-11', 1, 50.00, 'premium'),
+(6, 'MC1-12', 1, 50.00, 'premium'),
+(6, 'MC1-13', 1, 50.00, 'premium'),
+(6, 'MC1-14', 1, 50.00, 'premium'),
+(6, 'MC1-15', 1, 50.00, 'premium'),
+(6, 'MC1-16', 1, 50.00, 'premium'),
+(6, 'MC1-17', 1, 50.00, 'premium'),
+(6, 'MC1-18', 1, 50.00, 'premium'),
+(6, 'MC1-19', 1, 50.00, 'premium'),
+(6, 'MC1-20', 1, 50.00, 'premium');
+
+-- Espacios para Megacentro (Lote 6) - Nivel 2 (Standard)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(6, 'MC2-01', 2, 40.00, 'standard'),
+(6, 'MC2-02', 2, 40.00, 'standard'),
+(6, 'MC2-03', 2, 40.00, 'standard'),
+(6, 'MC2-04', 2, 40.00, 'standard'),
+(6, 'MC2-05', 2, 40.00, 'standard'),
+(6, 'MC2-06', 2, 40.00, 'standard'),
+(6, 'MC2-07', 2, 40.00, 'standard'),
+(6, 'MC2-08', 2, 40.00, 'standard'),
+(6, 'MC2-09', 2, 40.00, 'standard'),
+(6, 'MC2-10', 2, 40.00, 'standard'),
+(6, 'MC2-11', 2, 40.00, 'standard'),
+(6, 'MC2-12', 2, 40.00, 'standard'),
+(6, 'MC2-13', 2, 40.00, 'standard'),
+(6, 'MC2-14', 2, 40.00, 'standard'),
+(6, 'MC2-15', 2, 40.00, 'standard'),
+(6, 'MC2-16', 2, 40.00, 'standard'),
+(6, 'MC2-17', 2, 40.00, 'standard'),
+(6, 'MC2-18', 2, 40.00, 'standard'),
+(6, 'MC2-19', 2, 40.00, 'standard'),
+(6, 'MC2-20', 2, 40.00, 'standard');
+
+-- Espacios para Megacentro (Lote 6) - Nivel 3 (Economy)
+INSERT INTO parking_spaces (lot_id, name, level, base_price, zone_type) VALUES
+(6, 'MC3-01', 3, 30.00, 'economy'),
+(6, 'MC3-02', 3, 30.00, 'economy'),
+(6, 'MC3-03', 3, 30.00, 'economy'),
+(6, 'MC3-04', 3, 30.00, 'economy'),
+(6, 'MC3-05', 3, 30.00, 'economy'),
+(6, 'MC3-06', 3, 30.00, 'economy'),
+(6, 'MC3-07', 3, 30.00, 'economy'),
+(6, 'MC3-08', 3, 30.00, 'economy'),
+(6, 'MC3-09', 3, 30.00, 'economy'),
+(6, 'MC3-10', 3, 30.00, 'economy'),
+(6, 'MC3-11', 3, 30.00, 'economy'),
+(6, 'MC3-12', 3, 30.00, 'economy'),
+(6, 'MC3-13', 3, 30.00, 'economy'),
+(6, 'MC3-14', 3, 30.00, 'economy'),
+(6, 'MC3-15', 3, 30.00, 'economy');
 
 -- Datos de prueba: Reglas de Precios Dinámicos
 INSERT INTO pricing_rules (zone_type, hour_start, hour_end, multiplier, day_of_week) VALUES
