@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Dashboard from './pages/Dashboard';
 import LotDetail from './pages/LotDetail';
+import Configuration from './pages/Configuration';
 import Login from './pages/Login';
 import { SensorProvider } from './contexts/SensorContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -32,6 +33,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <LotDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/configuration"
+                  element={
+                    <ProtectedRoute>
+                      <Configuration />
                     </ProtectedRoute>
                   }
                 />
