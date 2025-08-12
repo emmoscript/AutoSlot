@@ -63,7 +63,7 @@ class ApiClient {
 
     // Add auth token if available
     if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+      (headers as any).Authorization = `Bearer ${this.token}`;
     }
 
     const config: RequestInit = {
@@ -242,6 +242,5 @@ export const parkingLotApi = {
   }
 };
 
-// Explicit exports to ensure they're available
-export type { User, ParkingLot, ParkingSpace, ParkingLotWithSpaces };
+// Export the API client
 export { apiClient };
