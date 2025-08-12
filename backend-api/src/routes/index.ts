@@ -1,27 +1,28 @@
-import { Router } from 'express';
-import createParkingLotRoutes from './parkingLotRoutes';
-import createParkingSpaceRoutes from './parkingSpaceRoutes';
-import createReservationRoutes from './reservationRoutes';
-import createSensorRoutes from './sensorRoutes';
-import createAuthRoutes from './authRoutes';
+import express from 'express';
+import authRoutes from './authRoutes';
+import parkingLotRoutes from './parkingLotRoutes';
+import parkingSpaceRoutes from './parkingSpaceRoutes';
+import reservationRoutes from './reservationRoutes';
+import sensorRoutes from './sensorRoutes';
 import quickReserveRoutes from './quickReserveRoutes';
-import { Database } from 'sqlite3';
 
-export default function createRoutes(db: Database): Router {
-  const router = Router();
-  
-  // Make db available to all routes
-  router.use((req, res, next) => {
-    req.app.locals.db = db;
-    next();
+const router = express.Router();
+
+// Health check endpoint for Render
+router.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'AutoSlot Backend API is running',
+    timestamp: new Date().toISOString()
   });
+});
 
-  router.use('/lots', createParkingLotRoutes(db));
-  router.use('/spaces', createParkingSpaceRoutes(db));
-  router.use('/reservations', createReservationRoutes(db));
-  router.use('/sensors', createSensorRoutes(db));
-  router.use('/auth', createAuthRoutes(db));
-  router.use('/', quickReserveRoutes); // Quick reserve routes - sin /api prefix
+// API routes
+router.use('/auth', authRoutes);
+router.use('/parking-lots', parkingLotRoutes);
+router.use('/parking-spaces', parkingSpaceRoutes);
+router.use('/reservations', reservationRoutes);
+router.use('/sensors', sensorRoutes);
+router.use('/lots', quickReserveRoutes);
 
-  return router;
-} 
+export default router; 

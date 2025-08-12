@@ -2,8 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import createRoutes from './routes'; // Importamos el enrutador principal
-import { Database } from 'sqlite3';
+import routes from './routes';
 import { getDb } from './database';
 
 const app = express();
@@ -23,33 +22,40 @@ app.use(rateLimit({
   message: "Too many requests, please try again later."
 }));
 
-// Initialize database and create routes
-let db: Database;
-
+// Initialize database and start server
 async function startServer() {
   try {
     // Initialize database
-    db = await getDb();
+    await getDb();
     console.log('✅ Database initialized successfully');
-
-    // Create routes with database instance
-    const apiRoutes = createRoutes(db);
 
     // Ruta de bienvenida a la API
     app.get('/', (req, res) => {
       res.json({
-        message: '🚗 AutoSlot API - Now with Authentication!',
+        message: '🚗 AutoSlot API - Sistema de Gestión de Estacionamientos',
         version: '1.2.0',
-        api_docs: '/api' 
+        status: 'running',
+        endpoints: {
+          auth: '/api/auth',
+          parking_lots: '/api/parking-lots',
+          parking_spaces: '/api/parking-spaces',
+          reservations: '/api/reservations',
+          sensors: '/api/sensors',
+          health: '/api/health'
+        }
       });
     });
 
     // Registrar todas las rutas de la API bajo el prefijo /api
-    app.use('/api', apiRoutes);
+    app.use('/api', routes);
 
-    // Endpoint de Health Check
+    // Endpoint de Health Check global
     app.get('/health', (req, res) => {
-      res.status(200).json({ status: 'UP' });
+      res.status(200).json({ 
+        status: 'UP',
+        service: 'AutoSlot Backend API',
+        timestamp: new Date().toISOString()
+      });
     });
 
     app.listen(PORT, '0.0.0.0', () => {
@@ -58,6 +64,7 @@ async function startServer() {
       console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
       console.log(`🌐 Network accessible at: http://0.0.0.0:${PORT}`);
       console.log(`📱 Mobile app should use: http://10.0.2.2:${PORT} (Android emulator)`);
+      console.log(`🏥 Health check: http://localhost:${PORT}/health`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
