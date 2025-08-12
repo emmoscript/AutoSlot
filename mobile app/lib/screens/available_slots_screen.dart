@@ -4,6 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/screens/payment_screen.dart'; // Import the new payment screen
 import 'package:mobile_app/widget/slot_grid_item.dart'; // Ensure this path is correct
+import 'package:mobile_app/services/lot_service.dart';
+import 'package:mobile_app/screens/quick_reserve_screen.dart';
 
 // Slot model for type safety
 class Slot {
@@ -62,19 +64,8 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
   @override
   void initState() {
     super.initState();
-    // Use slots from API (passed in widget.parking['slots']) and parse to Slot objects
-    final rawSlots = widget.parking['slots'] ?? [];
-    print('Raw slots data: $rawSlots');
-    _allSlots = rawSlots is List
-        ? rawSlots.map((e) => Slot.fromJson(e as Map<String, dynamic>)).toList()
-        : [];
-
-    // Initialize available floors based on real slots
-    _availableFloors =
-        ['All'] + _allSlots.map((slot) => slot.floor).toSet().toList()
-          ..sort();
-    _selectedFloor = _availableFloors.first;
-
+    _loadSlots();
+    
     _buttonAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -87,6 +78,55 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
           ),
         );
   }
+  
+  void _loadSlots() async {
+    try {
+      // Use slots from API (passed in widget.parking['slots']) and parse to Slot objects
+      final rawSlots = widget.parking['slots'] ?? [];
+      print('Raw slots data: $rawSlots');
+      
+      if (rawSlots.isEmpty) {
+        // If no slots in parking data, fetch them from API
+        print('Fetching slots for parking ID: ${widget.parking['id']}');
+        final slotsFromApi = await LotService.fetchSlotsForLot(widget.parking['id']);
+        _allSlots = slotsFromApi.map((e) => Slot.fromJson(e)).toList();
+      } else {
+        _allSlots = rawSlots is List
+            ? rawSlots.map((e) => Slot.fromJson(e as Map<String, dynamic>)).toList()
+            : [];
+      }
+
+      // Initialize available floors based on real slots
+      if (_allSlots.isNotEmpty) {
+        _availableFloors =
+            ['All'] + _allSlots.map((slot) => slot.floor).toSet().toList()
+              ..sort();
+      } else {
+        // Provide more realistic floors based on parking lot name
+        String lotName = widget.parking['name'] ?? '';
+        if (lotName.toLowerCase().contains('mall') || lotName.toLowerCase().contains('center')) {
+          _availableFloors = ['All', 'P1', 'P2', 'P3', 'P4']; // Shopping centers typically have more floors
+        } else {
+          _availableFloors = ['All', 'P1', 'P2']; // Regular lots
+        }
+      }
+      _selectedFloor = _availableFloors.first;
+      
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      print('Error loading slots: $e');
+      // Set fallback floors
+      _availableFloors = ['All', 'P1', 'P2'];
+      _selectedFloor = _availableFloors.first;
+      _allSlots = [];
+      
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -96,6 +136,72 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
   }
 
   // Remove _getInitialSlots and _generateRandomSlots, and update all usages to _allSlots
+
+  // Helper function to calculate average price from slots
+  String _calculateAveragePrice() {
+    if (_allSlots.isEmpty) {
+      return widget.parking['tarifa']?.toString() ?? 'Consultar';
+    }
+    
+    // Get slots data and calculate average base_price
+    final rawSlots = widget.parking['slots'] ?? widget.parking['spaces'] ?? [];
+    if (rawSlots.isEmpty) {
+      return 'Consultar';
+    }
+    
+    double totalPrice = 0;
+    int validPrices = 0;
+    
+    for (var slot in rawSlots) {
+      if (slot['base_price'] != null) {
+        totalPrice += double.tryParse(slot['base_price'].toString()) ?? 0;
+        validPrices++;
+      }
+    }
+    
+    if (validPrices > 0) {
+      double avgPrice = totalPrice / validPrices;
+      return 'RD\$${avgPrice.toStringAsFixed(0)}/h';
+    }
+    
+    return 'Consultar';
+  }
+
+  // Helper function to build quick info items
+  Widget _buildQuickInfo(String label, String value, IconData icon, {Color? color}) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: color ?? Colors.blue.shade800,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: color ?? Colors.grey.shade800,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
 
   // Function to show the payment screen as a bottom sheet
   void _showPaymentScreen(BuildContext context) {
@@ -115,7 +221,7 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Allow it to take up more space if needed
-      backgroundColor: Colors.transparent, // For custom border radius
+      backgroundColor: Colors.white, // Ensure white background
       builder: (context) {
         return DraggableScrollableSheet(
           initialChildSize: 0.7, // Payment screen takes 70% of height
@@ -127,13 +233,13 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
           builder: (BuildContext context, ScrollController scrollController) {
             return Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).canvasColor,
+                color: Colors.white,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(20),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.grey.withOpacity(0.1),
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),
@@ -164,102 +270,114 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
 
     debugPrint('Parking info for slots screen: ${widget.parking}');
 
-    bool? lotDisponible = widget.parking['disponible'];
-    if (lotDisponible == null) {
-      // Try to infer from slots
-      if (_allSlots.isNotEmpty) {
-        lotDisponible = _allSlots.any((slot) => slot.isAvailable);
+    // Calculate availability from actual slots data
+    bool? lotDisponible;
+    String disponibilidadText = 'Cargando...';
+    
+    if (_allSlots.isNotEmpty) {
+      int availableSlots = _allSlots.where((slot) => slot.isAvailable).length;
+      int totalSlots = _allSlots.length;
+      lotDisponible = availableSlots > 0;
+      disponibilidadText = '$availableSlots de $totalSlots disponibles';
+    } else {
+      // Fallback if no slots data
+      lotDisponible = widget.parking['disponible'];
+      if (lotDisponible == null) {
+        disponibilidadText = 'Información no disponible';
+      } else {
+        disponibilidadText = lotDisponible ? 'Disponible' : 'Ocupado';
       }
     }
 
-    String disponibilidadText;
-    if (lotDisponible == null) {
-      disponibilidadText = 'Desconocido';
-    } else {
-      disponibilidadText = lotDisponible ? 'Disponible' : 'Ocupado';
-    }
-
-    return Stack(
-      // Changed root to Stack to layer scrollable content and fixed button
-      children: [
-        CustomScrollView(
+    return Scaffold(
+      backgroundColor: Colors.white, // Ensure white background
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.parking['name'] ?? 'Estacionamiento',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
+            ),
+            Text(
+              'Selecciona tu espacio',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.blue.shade800,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Volver al mapa',
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.flash_on, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => QuickReserveScreen(parking: widget.parking),
+                ),
+              );
+            },
+            tooltip: 'Reserva Rápida',
+          ),
+          IconButton(
+            icon: const Icon(Icons.map, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Volver al mapa',
+          ),
+        ],
+      ),
+      body: Stack(
+        // Changed root to Stack to layer scrollable content and fixed button
+        children: [
+          CustomScrollView(
           controller: widget
               .scrollController, // Assign the DraggableScrollableSheet's controller
           slivers: [
-            // Drag handle (common in bottom sheets)
+            // Quick Info Card
             SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
+              child: Container(
+                margin: const EdgeInsets.all(16.0),
+                child: Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildQuickInfo(
+                          'Tarifa', 
+                          _calculateAveragePrice(),
+                          Icons.attach_money,
+                        ),
+                        Container(width: 1, height: 30, color: Colors.grey.shade300),
+                        _buildQuickInfo('Servicios', 'Disponibles', Icons.room_service),
+                        Container(width: 1, height: 30, color: Colors.grey.shade300),
+                        _buildQuickInfo('Estado', disponibilidadText, Icons.info_outline, 
+                          color: lotDisponible == true
+                              ? Colors.green.shade600
+                              : lotDisponible == false
+                                  ? Colors.red.shade600
+                                  : Colors.grey.shade600),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ),
-            // Parking Name and Icon
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 8.0,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.local_parking,
-                      color: Colors.blue[700],
-                      size: 32,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${widget.parking['name']}',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis, // Handle long names
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Parking Details (Tariff, Services, Availability)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tarifa: ${widget.parking['tarifa']}',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Servicios: ${(widget.parking['servicios'] ?? []).join(', ')}',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Disponibilidad: $disponibilidadText',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: lotDisponible == true
-                            ? Colors.green
-                            : lotDisponible == false
-                            ? Colors.red
-                            : Colors.grey,
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -364,36 +482,70 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
             const SliverToBoxAdapter(
               child: SizedBox(height: 10),
             ), // Spacing below selected slots or map if no slots selected
-            // Floor Filter Dropdown and Slot Grid Header
+            // Floor Filter Section
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Espacios disponibles:',
-                      style: Theme.of(context).textTheme.titleLarge,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Card(
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Espacios disponibles',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedFloor,
+                              items: _availableFloors.map<DropdownMenuItem<String>>((
+                                String value,
+                              ) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(
+                                    value,
+                                    style: TextStyle(
+                                      color: Colors.blue.shade800,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedFloor = newValue!;
+                                  _selectedSlotIds
+                                      .clear(); // Clear selection when floor filter changes
+                                });
+                              },
+                              icon: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.blue.shade800,
+                              ),
+                              iconSize: 20,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    DropdownButton<String>(
-                      value: _selectedFloor,
-                      items: _availableFloors.map<DropdownMenuItem<String>>((
-                        String value,
-                      ) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedFloor = newValue!;
-                          _selectedSlotIds
-                              .clear(); // Clear selection when floor filter changes
-                        });
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -401,9 +553,47 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
 
             // Slot Grid or "No available" message
             filteredSlots.isEmpty
-                ? const SliverToBoxAdapter(
-                    child: Center(
-                      child: Text('No hay espacios disponibles en este piso.'),
+                ? SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.all(16.0),
+                      child: Card(
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.car_rental,
+                                size: 48,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No hay espacios disponibles en este piso',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Prueba seleccionar otro piso',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   )
                 : SliverPadding(
@@ -508,7 +698,10 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
                     _showPaymentScreen(context); // Then show the payment screen
                   },
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade800,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 4,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -518,14 +711,18 @@ class _AvailableSlotsScreenState extends State<AvailableSlotsScreen>
                     position: _buttonSlideAnimation,
                     child: Text(
                       'Reservar (${_selectedSlotIds.length} Espacio${_selectedSlotIds.length > 1 ? 's' : ''})', // Dynamic text
-                      style: const TextStyle(fontSize: 18),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

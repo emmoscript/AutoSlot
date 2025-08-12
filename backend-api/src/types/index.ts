@@ -60,6 +60,9 @@ export interface User {
   name: string;
   email: string;
   vehicle_plate?: string;
+  vehicle_brand?: string;
+  vehicle_model?: string;
+  vehicle_color?: string;
   phone?: string;
   role: 'user' | 'admin';
   is_active: boolean;
@@ -77,6 +80,9 @@ export interface RegisterRequest {
   email: string;
   password: string;
   vehicle_plate?: string;
+  vehicle_brand?: string;
+  vehicle_model?: string;
+  vehicle_color?: string;
   phone?: string;
 }
 

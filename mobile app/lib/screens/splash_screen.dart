@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -20,9 +22,26 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
-    Future.delayed(const Duration(seconds: 2), () {
+    
+    _checkAuthAndNavigate();
+  }
+  
+  void _checkAuthAndNavigate() async {
+    // Wait for the splash animation
+    await Future.delayed(const Duration(seconds: 2));
+    
+    if (!mounted) return;
+    
+    // Check if user is logged in
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (userProvider.user != null) {
+      // User is logged in, go to feed
       Navigator.of(context).pushReplacementNamed('/feed');
-    });
+    } else {
+      // User not logged in, go to login
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
   }
 
   @override

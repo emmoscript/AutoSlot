@@ -21,13 +21,56 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<bool> login(String email, String password) async {
-    final user = await AuthService.login(email, password);
-    if (user != null) {
-      _user = user;
-      notifyListeners();
-      return true;
+    try {
+      final user = await AuthService.login(email, password);
+      if (user != null) {
+        _user = user;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Login error in UserProvider: $e');
+      return false;
     }
-    return false;
+  }
+
+  Future<bool> register(String name, String email, String password, String plate, String brand, String model, String color, String phone) async {
+    try {
+      final user = await AuthService.register(name, email, password, plate, brand, model, color, phone);
+      if (user != null) {
+        _user = user;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Register error in UserProvider: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateProfile({
+    String? name,
+    String? vehiclePlate,
+    String? phone,
+  }) async {
+    try {
+      final updatedUser = await AuthService.updateProfile(
+        name: name,
+        vehiclePlate: vehiclePlate,
+        phone: phone,
+      );
+      if (updatedUser != null) {
+        _user = updatedUser;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Update profile error in UserProvider: $e');
+      return false;
+    }
   }
 
   Future<void> logout() async {
@@ -73,9 +116,18 @@ class AutoSlotApp extends StatelessWidget {
 }
 
 Widget _requireAuth(BuildContext context, Widget screen) {
-  final user = Provider.of<UserProvider>(context).user;
-  if (user == null) {
-    return const LoginScreen();
-  }
-  return screen;
+  return Consumer<UserProvider>(
+    builder: (context, userProvider, child) {
+      if (userProvider.user == null) {
+        // Redirect to login instead of returning LoginScreen directly
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        });
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+      return screen;
+    },
+  );
 }

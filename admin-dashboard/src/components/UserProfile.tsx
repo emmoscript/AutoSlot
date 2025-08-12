@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const UserProfile: React.FC = () => {
@@ -92,17 +92,6 @@ const UserProfile: React.FC = () => {
 
           {/* Opciones */}
           <div className="p-2">
-            <button
-              onClick={() => {
-                // Aquí se podría abrir un modal de configuración
-                setIsOpen(false);
-              }}
-              className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
-            >
-              <Settings className="w-4 h-4" />
-              <span>Configuración</span>
-            </button>
-            
             <button
               onClick={handleLogout}
               className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors duration-200"

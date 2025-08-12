@@ -1,37 +1,46 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/authController';
-import { Database } from 'sqlite3';
+import { getDb } from '../database';
 
-export default function createAuthRoutes(db: Database): Router {
-  const router = Router();
+const router = Router();
+
+// Public routes
+router.post('/register', async (req, res) => {
+  const db = await getDb();
   const authController = new AuthController(db);
+  authController.register(req, res);
+});
 
-  // Public routes
-  router.post('/register', (req, res) => {
-    authController.register(req, res);
-  });
-  
-  router.post('/login', (req, res) => {
-    authController.login(req, res);
-  });
-  
-  router.post('/logout', (req, res) => {
-    authController.logout(req, res);
-  });
+router.post('/login', async (req, res) => {
+  const db = await getDb();
+  const authController = new AuthController(db);
+  authController.login(req, res);
+});
 
-  // Protected routes - simplified without middleware for now
-  router.get('/me', (req, res) => {
-    authController.getCurrentUser(req, res);
-  });
-  
-  router.put('/profile', (req, res) => {
-    authController.updateProfile(req, res);
-  });
-  
-  // Admin routes
-  router.get('/users', (req, res) => {
-    authController.getAllUsers(req, res);
-  });
+router.post('/logout', async (req, res) => {
+  const db = await getDb();
+  const authController = new AuthController(db);
+  authController.logout(req, res);
+});
 
-  return router;
-} 
+// Protected routes - simplified without middleware for now
+router.get('/me', async (req, res) => {
+  const db = await getDb();
+  const authController = new AuthController(db);
+  authController.getCurrentUser(req, res);
+});
+
+router.put('/profile', async (req, res) => {
+  const db = await getDb();
+  const authController = new AuthController(db);
+  authController.updateProfile(req, res);
+});
+
+// Admin routes
+router.get('/users', async (req, res) => {
+  const db = await getDb();
+  const authController = new AuthController(db);
+  authController.getAllUsers(req, res);
+});
+
+export default router; 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/button';
-import { Eye, DollarSign, Camera, Car } from 'lucide-react';
+import { Eye, DollarSign, Camera, Car, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import LotsOverview from '../components/LotsOverview';
 import PaymentDashboard from '../components/PaymentDashboard';
@@ -12,6 +13,7 @@ import UserProfile from '../components/UserProfile';
 
 const Dashboard: React.FC = () => {
   const [activeSection, setActiveSection] = useState('overview');
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
@@ -28,6 +30,17 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                console.log('🔧 Configuración button clicked');
+                navigate('/configuration');
+              }}
+              className="flex items-center space-x-2 dark:text-white"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Configuración</span>
+            </Button>
             <ThemeToggle />
             <UserProfile />
           </div>

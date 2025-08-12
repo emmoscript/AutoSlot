@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/user.dart';
+import '../config/api_config.dart';
 
 class AuthService {
   static User? _currentUser;
@@ -12,29 +13,43 @@ class AuthService {
 
   static Future<User?> login(String email, String password) async {
     try {
+      print('🔄 Attempting login for: $email');
       final response = await http.post(
-        Uri.parse('http://10.0.0.7:4000/api/auth/login'),
+        Uri.parse(ApiConfig.authLogin),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
 
+      print('📡 Login response status: ${response.statusCode}');
+      print('📡 Login response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        _token = data['token'];
-        _currentUser = User.fromJson(data['user'] ?? data);
-        return _currentUser;
+        
+        // Check if login was actually successful
+        if (data['token'] != null && data['user'] != null) {
+          _token = data['token'];
+          _currentUser = User.fromJson(data['user']);
+          print('✅ Login successful, user: ${_currentUser?.email}');
+          return _currentUser;
+        } else {
+          print('❌ Login failed - no token or user: ${data}');
+          return null;
+        }
       } else {
-        throw Exception('Login failed: ${response.statusCode}');
+        print('❌ HTTP Error: ${response.statusCode} - ${response.body}');
+        return null;
       }
     } catch (e) {
-      throw Exception('Login error: $e');
+      print('❌ Exception during login: $e');
+      return null;
     }
   }
 
   static Future<void> logout() async {
     try {
       await http.post(
-        Uri.parse('http://10.0.0.7:4000/api/auth/logout'),
+        Uri.parse(ApiConfig.authLogout),
         headers: {'Authorization': 'Bearer $_token'},
       );
     } finally {
@@ -46,7 +61,7 @@ class AuthService {
   static Future<User?> fetchCurrentUser() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.0.7:4000/api/auth/me'),
+        Uri.parse(ApiConfig.authMe),
         headers: {'Authorization': 'Bearer $_token'},
       );
 
@@ -69,16 +84,24 @@ class AuthService {
     String email,
     String password,
     String plate,
+    String brand,
+    String model,
+    String color,
+    String phone,
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.0.7:4000/api/auth/register'),
+        Uri.parse(ApiConfig.authRegister),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': name,
           'email': email,
           'password': password,
-          'plate': plate,
+          'vehicle_plate': plate,
+          'vehicle_brand': brand,
+          'vehicle_model': model,
+          'vehicle_color': color,
+          'phone': phone,
         }),
       );
 
@@ -92,6 +115,53 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('Registration error: $e');
+    }
+  }
+
+  static Future<User?> updateProfile({
+    String? name,
+    String? vehiclePlate,
+    String? vehicleBrand,
+    String? vehicleModel,
+    String? vehicleColor,
+    String? phone,
+  }) async {
+    try {
+      final Map<String, dynamic> updateData = {};
+      if (name != null) updateData['name'] = name;
+      if (vehiclePlate != null) updateData['vehicle_plate'] = vehiclePlate;
+      if (vehicleBrand != null) updateData['vehicle_brand'] = vehicleBrand;
+      if (vehicleModel != null) updateData['vehicle_model'] = vehicleModel;
+      if (vehicleColor != null) updateData['vehicle_color'] = vehicleColor;
+      if (phone != null) updateData['phone'] = phone;
+
+      print('🔄 Updating profile with: $updateData');
+      
+      final response = await http.put(
+        Uri.parse(ApiConfig.authProfile),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+        body: jsonEncode(updateData),
+      );
+
+      print('📡 Update profile response status: ${response.statusCode}');
+      print('📡 Update profile response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['user'] != null) {
+          _currentUser = User.fromJson(data['user']);
+          print('✅ Profile updated successfully');
+          return _currentUser;
+        }
+      }
+      
+      throw Exception('Failed to update profile: ${response.body}');
+    } catch (e) {
+      print('❌ Exception during profile update: $e');
+      throw Exception('Profile update error: $e');
     }
   }
 }

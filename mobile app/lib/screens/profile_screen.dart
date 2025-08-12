@@ -33,17 +33,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _plate = user.vehiclePlate;
   }
 
-  void _save() {
+  void _save() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      setState(() {
-        editing = false;
-        user = User(name: _name!, email: _email!, vehiclePlate: _plate!);
-      });
-      // Optionally, update user info in provider/backend here
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Perfil actualizado')));
+      
+      // Show loading
+      setState(() => editing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Actualizando perfil...')),
+      );
+      
+      try {
+        // Update profile via API
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final success = await userProvider.updateProfile(
+          name: _name,
+          vehiclePlate: _plate,
+          // phone: _phone, // Add phone when available
+        );
+        
+        if (success) {
+          // Update local user data
+          setState(() {
+            user = userProvider.user!;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Perfil actualizado correctamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          // Revert to editing mode on failure
+          setState(() => editing = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Error al actualizar el perfil'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        // Revert to editing mode on error
+        setState(() => editing = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

@@ -114,14 +114,13 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            {/* Credenciales de prueba */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-                Credenciales de Prueba
+            {/* Información de acceso */}
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                ℹ️ Acceso de Administrador
               </h3>
-              <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                <p><strong>Usuario:</strong> admin</p>
-                <p><strong>Contraseña:</strong> admin</p>
+              <div className="text-sm text-amber-700 dark:text-amber-300">
+                <p>Solo usuarios con rol de <strong>administrador</strong> pueden acceder a este sistema.</p>
               </div>
             </div>
 

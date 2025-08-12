@@ -156,7 +156,7 @@ export class AuthController {
       }
 
       const updates = req.body;
-      const allowedFields = ['name', 'vehicle_plate', 'phone'];
+      const allowedFields = ['name', 'vehicle_plate', 'vehicle_brand', 'vehicle_model', 'vehicle_color', 'phone'];
       const filteredUpdates: any = {};
 
       // Only allow specific fields to be updated
