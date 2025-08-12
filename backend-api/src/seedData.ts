@@ -451,7 +451,7 @@ export async function seedDatabase() {
         [lotData.name, lotData.address, lotData.latitude, lotData.longitude, new Date().toISOString(), new Date().toISOString()]
       );
       
-      const lotId = lotResult.lastID;
+      const lotId = (lotResult as any).lastID;
       console.log(`✅ Created lot: ${lotData.name} (ID: ${lotId})`);
       
       // Insert spaces for each level
