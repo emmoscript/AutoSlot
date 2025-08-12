@@ -1,7 +1,15 @@
 // config/api_config.dart
 class ApiConfig {
+  // Production URL - Replace 'your-app-name.onrender.com' with your actual Render URL
+  // Example: 'https://autoslot-backend-api.onrender.com'
+  static const String productionUrl = 'https://your-app-name.onrender.com'; // ⚠️ REPLACE WITH YOUR ACTUAL RENDER URL!
+  
   // Para desarrollo, usamos diferentes URLs según la plataforma
   static String get baseUrl {
+    // En producción, usa la URL de Render
+    if (const bool.fromEnvironment('dart.vm.product')) {
+      return productionUrl;
+    }
     // En desarrollo, intenta múltiples opciones
     return _getDevBaseUrl();
   }
@@ -19,7 +27,6 @@ class ApiConfig {
   // URLs específicas para diferentes entornos
   static const String androidEmulatorUrl = 'http://10.0.2.2:4000';
   static const String iOSSimulatorUrl = 'http://localhost:4000';
-  static const String productionUrl = 'https://autoslot-api.herokuapp.com'; // Cuando tengas producción
   
   // Endpoints de la API
   static String get authLogin => '$baseUrl/api/auth/login';

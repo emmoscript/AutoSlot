@@ -1,6 +1,8 @@
 // API configuration and services for AutoSlot Admin Dashboard
 
-const API_BASE_URL = 'http://10.0.0.92:4000/api';
+// Production URL - Replace 'your-app-name.onrender.com' with your actual Render URL
+// Example: 'https://autoslot-backend-api.onrender.com'
+const API_BASE_URL = 'https://your-app-name.onrender.com/api'; // ⚠️ REPLACE WITH YOUR ACTUAL RENDER URL!
 
 // API User interface
 interface ApiUser {
