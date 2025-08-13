@@ -62,7 +62,7 @@ class ApiClient {
 
     // Add auth token if available
     if (this.token) {
-      (headers as any).Authorization = `Bearer ${this.token}`;
+      (headers as Record<string, string>).Authorization = `Bearer ${this.token}`;
     }
 
     const config: RequestInit = {

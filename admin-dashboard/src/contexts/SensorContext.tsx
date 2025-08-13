@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import type { ParkingLotWithSpaces, ParkingSpace } from '../types';
+import type { ParkingLotWithSpaces } from '../types';
 
 // Tipo para unificar los datos de eventos de los sensores
 type SensorEventPayload = {

@@ -10,13 +10,7 @@ import {
   Camera,
   Save,
   RefreshCw,
-  AlertTriangle,
-  CheckCircle,
-  Server,
-  Globe,
-  Lock,
-  Eye,
-  EyeOff
+  Server
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -81,7 +75,7 @@ const Configuration: React.FC = () => {
   console.log('⚙️ Configuration component loaded');
   console.log('👤 Current user:', user);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPasswords, setShowPasswords] = useState(false);
+  // const [showPasswords, setShowPasswords] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [config, setConfig] = useState<SystemConfig>({
     // API Configuration

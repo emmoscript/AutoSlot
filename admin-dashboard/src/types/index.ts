@@ -35,6 +35,8 @@ export interface Reservation {
   end_time?: string;
   status: 'active' | 'completed' | 'cancelled';
   license_plate?: string;
+  total_cost?: number;
+  payment_method?: 'credit_card' | 'cash' | 'mobile' | 'qr';
   created_at: string;
   parking_space?: ParkingSpace;
   parking_lot?: ParkingLot;

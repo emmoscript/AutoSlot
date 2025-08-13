@@ -26,7 +26,7 @@ const SensorSimulator: React.FC<SensorSimulatorProps> = ({ onSpaceUpdate }) => {
       const lotsWithSpaces = await Promise.all(
         lotsData.map(lot => parkingLotApi.getById(lot.id))
       );
-      setLots(lotsWithSpaces);
+      setLots(lotsWithSpaces.filter((lot): lot is ParkingLotWithSpaces => lot !== null));
     } catch (error) {
       console.error('Error loading lots:', error);
       toast.error('Failed to load parking lots');

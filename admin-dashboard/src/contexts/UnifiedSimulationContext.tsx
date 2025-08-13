@@ -172,7 +172,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
       license_plate: plate,
       vehicle_type: vehicleType,
       entry_time: now.toISOString(),
-      camera_location: cameraLocation,
+             camera_location: cameraLocation as 'entrance' | 'exit' | 'level_1' | 'level_2',
       confidence_score: 0.9 + Math.random() * 0.1,
       status: 'entered',
       payment_status: 'pending',
@@ -251,7 +251,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
         user_phone: 'SIMULATED',
         start_time: session.lprRecord.entry_time,
         end_time: now.toISOString(),
-        actual_duration: duration_minutes,
+        // actual_duration: duration_minutes, // This property doesn't exist in Reservation type
         total_cost: total_amount,
         status: 'completed',
         license_plate: session.lprRecord.license_plate,
