@@ -5,10 +5,17 @@ import '../config/api_config.dart';
 
 class LotService {
   static Future<List<Map<String, dynamic>>> fetchLots() async {
+    print('🔍 Fetching lots from: ${ApiConfig.lots}');
     final response = await http.get(Uri.parse(ApiConfig.lots));
+    print('📡 Response status: ${response.statusCode}');
+    print('📡 Response body: ${response.body}');
+    
     if (response.statusCode == 200) {
       final List data = json.decode(response.body);
-      return data.map<Map<String, dynamic>>((lot) {
+      print('📊 Parsed ${data.length} lots');
+      
+      final lots = data.map<Map<String, dynamic>>((lot) {
+        print('📍 Processing lot: ${lot['name']} at ${lot['latitude']}, ${lot['longitude']}');
         return {
           'id': lot['id'],
           'name': lot['name'],
@@ -23,7 +30,11 @@ class LotService {
           // Add other fields as needed
         };
       }).toList();
+      
+      print('✅ Successfully processed ${lots.length} lots');
+      return lots;
     } else {
+      print('❌ Failed to load lots: ${response.statusCode} - ${response.body}');
       throw Exception('Failed to load lots');
     }
   }
@@ -83,7 +94,7 @@ class LotService {
 
   // Quick reserve - automatic space assignment
   static Future<Map<String, dynamic>> quickReserve(int lotId, int userId) async {
-    final url = '${ApiConfig.baseUrl}/api/lots/$lotId/quick-reserve';
+    final url = '${ApiConfig.baseUrl}/api/parking-lots/$lotId/quick-reserve';
     print('🚀 Quick reserve URL: $url');
     
     final response = await http.post(
@@ -105,7 +116,7 @@ class LotService {
 
   // Get optimal spaces preview
   static Future<Map<String, dynamic>> getOptimalSpaces(int lotId) async {
-    final url = '${ApiConfig.baseUrl}/api/lots/$lotId/optimal-spaces';
+    final url = '${ApiConfig.baseUrl}/api/parking-lots/$lotId/optimal-spaces';
     print('🔍 Optimal spaces URL: $url');
     
     final response = await http.get(Uri.parse(url));

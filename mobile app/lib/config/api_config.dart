@@ -29,8 +29,8 @@ class ApiConfig {
   static String get authLogout => '$baseUrl/api/auth/logout';
   static String get authMe => '$baseUrl/api/auth/me';
   static String get authProfile => '$baseUrl/api/auth/profile';
-  static String get lots => '$baseUrl/api/lots';
+  static String get lots => '$baseUrl/api/parking-lots';
   
-  static String lotById(int id) => '$baseUrl/api/lots/$id';
-  static String spaces(int lotId) => '$baseUrl/api/spaces?lot_id=$lotId';
+  static String lotById(int id) => '$baseUrl/api/parking-lots/$id';
+  static String spaces(int lotId) => '$baseUrl/api/parking-spaces?lot_id=$lotId';
 }

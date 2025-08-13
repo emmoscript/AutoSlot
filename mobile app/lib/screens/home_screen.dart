@@ -29,13 +29,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchLots() async {
     try {
+      print('🏠 HomeScreen: Starting to fetch lots...');
       final lots = await LotService.fetchLots();
+      print('🏠 HomeScreen: Received ${lots.length} lots');
+      
+      for (var lot in lots) {
+        print('🏠 HomeScreen: Lot ${lot['name']} at ${lot['latitude']}, ${lot['longitude']}');
+        print('🏠 HomeScreen: Lot latlng: ${lot['latlng']}');
+      }
+      
       setState(() {
         _lots = lots;
         _loading = false;
         _error = false;
       });
+      print('🏠 HomeScreen: State updated with ${_lots.length} lots');
     } catch (e) {
+      print('🏠 HomeScreen: Error fetching lots: $e');
       setState(() {
         _loading = false;
         _error = true;
@@ -45,25 +55,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate center and bounds to show all parking lots
-    LatLng center = _defaultCenter;
-    double zoom = 12.0; // Start with a more zoomed out view
+    print('🏠 HomeScreen: Building with ${_lots.length} lots');
     
-    if (_lots.isNotEmpty) {
-      // Calculate the center point of all parking lots
-      double avgLat = _lots.map((lot) => lot['latitude'] as double).reduce((a, b) => a + b) / _lots.length;
-      double avgLng = _lots.map((lot) => lot['longitude'] as double).reduce((a, b) => a + b) / _lots.length;
-      center = LatLng(avgLat, avgLng);
-      
-      // Calculate appropriate zoom based on the number of lots
-      if (_lots.length >= 6) {
-        zoom = 10.5; // More zoomed out for 6+ lots
-      } else if (_lots.length > 3) {
-        zoom = 11.0; // Medium zoom for 4-5 lots
-      } else if (_lots.length > 1) {
-        zoom = 11.5; // Less zoomed out for 2-3 lots
-      }
-    }
+    // Use fixed center and zoom for now
+    final center = LatLng(18.472, -69.902);
+    final zoom = 12.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -76,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         backgroundColor: Colors.blue.shade800,
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white), // Iconos blancos
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           if (_loading)
             Padding(
@@ -90,104 +86,167 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-        ],
-      ),
-      body: FlutterMap(
-        options: MapOptions(
-          initialCenter: center, 
-          initialZoom: zoom,
-          minZoom: 9.0,
-          maxZoom: 18.0,
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: const ['a', 'b', 'c'],
-            userAgentPackageName: 'com.example.mobile_app',
-          ),
-          if (_lots.isNotEmpty)
-            MarkerLayer(
-              markers: _lots.map((lot) {
-                return Marker(
-                  width: 100.0,
-                  height: 70.0,
-                  point: lot['latlng'],
-                  child: GestureDetector(
-                    onTap: () async {
-                      try {
-                        final lotDetails = await LotService.fetchLotById(
-                          lot['id'],
-                        );
-                        if (!mounted) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                AvailableSlotsScreen(parking: lotDetails),
-                          ),
-                        );
-                      } catch (e, stack) {
-                        print('Navigation error: $e');
-                        print(stack);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Error al cargar el lote: $e'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.shade800, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            lot['name'] ?? 'Parking',
-                            style: TextStyle(
-                              color: Colors.blue.shade800,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade800,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.local_parking,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
+          if (!_loading && !_error)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_lots.length} estacionamientos',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              }).toList(),
+                ),
+              ),
             ),
         ],
       ),
+      body: _error 
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error, size: 64, color: Colors.red),
+                SizedBox(height: 16),
+                Text('Error al cargar los estacionamientos'),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _fetchLots,
+                  child: Text('Reintentar'),
+                ),
+              ],
+            ),
+          )
+        : FlutterMap(
+            options: MapOptions(
+              initialCenter: center, 
+              initialZoom: zoom,
+              minZoom: 9.0,
+              maxZoom: 18.0,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+                userAgentPackageName: 'com.example.mobile_app',
+              ),
+              // Always show a test marker
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    width: 150.0,
+                    height: 100.0,
+                    point: LatLng(18.469696652249976, -69.93889928441415),
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white, width: 3),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.local_parking, color: Colors.white, size: 30),
+                          SizedBox(height: 4),
+                          Text(
+                            'TEST MARKER',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // Show actual lots if available
+              if (_lots.isNotEmpty)
+                MarkerLayer(
+                  markers: _lots.map((lot) {
+                    print('🗺️ Creating marker for: ${lot['name']} at ${lot['latlng']}');
+                    return Marker(
+                      width: 150.0,
+                      height: 100.0,
+                      point: lot['latlng'],
+                      child: GestureDetector(
+                        onTap: () async {
+                          try {
+                            final lotDetails = await LotService.fetchLotById(
+                              lot['id'],
+                            );
+                            if (!mounted) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AvailableSlotsScreen(parking: lotDetails),
+                              ),
+                            );
+                          } catch (e, stack) {
+                            print('Navigation error: $e');
+                            print(stack);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error al cargar el lote: $e'),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.local_parking,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                lot['name'] ?? 'Parking',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
     );
   }
 }
