@@ -1,8 +1,7 @@
 // API configuration and services for AutoSlot Admin Dashboard
 
-// Production URL - Replace 'your-app-name.onrender.com' with your actual Render URL
-// Example: 'https://autoslot-backend-api.onrender.com'
-const API_BASE_URL = 'https://your-app-name.onrender.com/api'; // ⚠️ REPLACE WITH YOUR ACTUAL RENDER URL!
+// Production URL - Your actual Render deployment
+const API_BASE_URL = 'https://autoslot-backend-api.onrender.com/api';
 
 // API User interface
 interface ApiUser {
@@ -193,7 +192,7 @@ export interface ParkingLotWithSpaces extends ParkingLot {
 export const parkingLotApi = {
   async getAll(): Promise<ParkingLot[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/lots`);
+      const response = await fetch(`${API_BASE_URL}/parking-lots`);
       const data = await response.json();
       return data || [];
     } catch (error) {
@@ -204,7 +203,7 @@ export const parkingLotApi = {
 
   async getById(id: number): Promise<ParkingLotWithSpaces | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/lots/${id}`);
+      const response = await fetch(`${API_BASE_URL}/parking-lots/${id}`);
       const data = await response.json();
       return data;
     } catch (error) {
@@ -214,7 +213,7 @@ export const parkingLotApi = {
   },
 
   async create(lotData: Omit<ParkingLot, 'id' | 'created_at' | 'updated_at'>): Promise<ParkingLot> {
-    const response = await fetch(`${API_BASE_URL}/lots`, {
+    const response = await fetch(`${API_BASE_URL}/parking-lots`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -225,7 +224,7 @@ export const parkingLotApi = {
   },
 
   async update(id: number, lotData: Partial<ParkingLot>): Promise<ParkingLot> {
-    const response = await fetch(`${API_BASE_URL}/lots/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/parking-lots/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -236,7 +235,7 @@ export const parkingLotApi = {
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/lots/${id}`, {
+    await fetch(`${API_BASE_URL}/parking-lots/${id}`, {
       method: 'DELETE',
     });
   }

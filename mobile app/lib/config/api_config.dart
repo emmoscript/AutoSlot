@@ -1,8 +1,7 @@
 // config/api_config.dart
 class ApiConfig {
-  // Production URL - Replace 'your-app-name.onrender.com' with your actual Render URL
-  // Example: 'https://autoslot-backend-api.onrender.com'
-  static const String productionUrl = 'https://your-app-name.onrender.com'; // ⚠️ REPLACE WITH YOUR ACTUAL RENDER URL!
+  // Production URL - Your actual Render deployment
+  static const String productionUrl = 'https://autoslot-backend-api.onrender.com';
   
   // Para desarrollo, usamos diferentes URLs según la plataforma
   static String get baseUrl {

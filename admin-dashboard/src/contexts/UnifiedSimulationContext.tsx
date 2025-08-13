@@ -104,7 +104,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
   const refreshLots = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4000/api/lots');
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/parking-lots');
       if (response.ok) {
         const data = await response.json();
         setLots(data);
