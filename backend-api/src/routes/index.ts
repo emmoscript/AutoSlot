@@ -7,6 +7,7 @@ import sensorRoutes from './sensorRoutes';
 import quickReserveRoutes from './quickReserveRoutes';
 import bcrypt from 'bcryptjs';
 import { getDb } from '../database';
+import { seedDatabase } from '../seedData';
 
 const router = express.Router();
 
@@ -98,6 +99,22 @@ router.post('/setup-admin', async (req, res) => {
   } catch (error) {
     console.error('❌ Error in setup:', error);
     res.status(500).json({ error: 'Setup failed' });
+  }
+});
+
+// Temporary seeding endpoint to populate database
+router.post('/seed-database', async (req, res) => {
+  try {
+    console.log('🌱 Starting database seeding...');
+    await seedDatabase();
+    console.log('✅ Database seeding completed!');
+    res.json({ 
+      success: true, 
+      message: 'Database seeded successfully with parking lots and spaces!'
+    });
+  } catch (error) {
+    console.error('❌ Error seeding database:', error);
+    res.status(500).json({ error: 'Database seeding failed' });
   }
 });
 
