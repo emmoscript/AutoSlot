@@ -28,14 +28,14 @@ export const ParkingSpaceModal = ({ isOpen, onClose, onSave, spaceToEdit }: Park
     if (spaceToEdit) {
       setFormState({
         name: spaceToEdit.name,
-        address: spaceToEdit.address,
-        latitude: spaceToEdit.latitude,
-        longitude: spaceToEdit.longitude,
+        address: '', // ParkingSpace doesn't have address
+        latitude: 0, // ParkingSpace doesn't have latitude
+        longitude: 0, // ParkingSpace doesn't have longitude
         base_price: spaceToEdit.base_price,
         zone_type: spaceToEdit.zone_type,
-        max_hours: spaceToEdit.max_hours,
-        features: spaceToEdit.features || [],
-        image_url: spaceToEdit.image_url || '',
+        max_hours: 24, // Default value
+        features: [], // ParkingSpace doesn't have features
+        image_url: '', // ParkingSpace doesn't have image_url
       });
     } else {
       setFormState(initialFormState);
@@ -49,7 +49,14 @@ export const ParkingSpaceModal = ({ isOpen, onClose, onSave, spaceToEdit }: Park
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formState);
+    // Only pass the properties that ParkingSpace actually has
+    onSave({
+      name: formState.name,
+      base_price: formState.base_price,
+      zone_type: formState.zone_type,
+      level: 1, // Default level
+      lot_id: 1, // Default lot_id
+    });
     onClose();
   };
 

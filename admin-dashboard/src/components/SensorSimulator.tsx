@@ -26,7 +26,7 @@ const SensorSimulator: React.FC<SensorSimulatorProps> = ({ onSpaceUpdate }) => {
       const lotsWithSpaces = await Promise.all(
         lotsData.map(lot => parkingLotApi.getById(lot.id))
       );
-      setLots(lotsWithSpaces);
+      setLots(lotsWithSpaces.filter((lot): lot is ParkingLotWithSpaces => lot !== null));
     } catch (error) {
       console.error('Error loading lots:', error);
       toast.error('Failed to load parking lots');
@@ -37,7 +37,7 @@ const SensorSimulator: React.FC<SensorSimulatorProps> = ({ onSpaceUpdate }) => {
 
   const simulateSensorEvent = async (spaceId: number, eventType: 'vehicle_entered' | 'vehicle_exited') => {
     try {
-      const response = await fetch('http://localhost:4000/api/sensors/trigger', {
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/trigger', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const SensorSimulator: React.FC<SensorSimulatorProps> = ({ onSpaceUpdate }) => {
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/sensors/simulate-random', {
+        const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/simulate-random', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

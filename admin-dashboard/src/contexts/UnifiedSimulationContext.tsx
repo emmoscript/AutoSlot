@@ -104,7 +104,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
   const refreshLots = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4000/api/lots');
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/parking-lots');
       if (response.ok) {
         const data = await response.json();
         setLots(data);
@@ -125,7 +125,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
   // Actualiza el estado de los lotes y muestra notificación
   const simulateSensorEvent = useCallback(async (spaceId: number, eventType: 'vehicle_entered' | 'vehicle_exited') => {
     try {
-      const response = await fetch('http://localhost:4000/api/sensors/simulate', {
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ space_id: spaceId, event_type: eventType })
@@ -172,7 +172,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
       license_plate: plate,
       vehicle_type: vehicleType,
       entry_time: now.toISOString(),
-      camera_location: cameraLocation,
+             camera_location: cameraLocation as 'entrance' | 'exit' | 'level_1' | 'level_2',
       confidence_score: 0.9 + Math.random() * 0.1,
       status: 'entered',
       payment_status: 'pending',
@@ -251,7 +251,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
         user_phone: 'SIMULATED',
         start_time: session.lprRecord.entry_time,
         end_time: now.toISOString(),
-        actual_duration: duration_minutes,
+        // actual_duration: duration_minutes, // This property doesn't exist in Reservation type
         total_cost: total_amount,
         status: 'completed',
         license_plate: session.lprRecord.license_plate,
@@ -304,7 +304,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/sensors/simulate-random', {
+        const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/simulate-random', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -383,7 +383,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
 
   const resetAllSpaces = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/spaces/reset', {
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/parking-spaces/reset', {
         method: 'POST',
       });
       if (response.ok) {
