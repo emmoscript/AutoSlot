@@ -90,30 +90,49 @@ class AuthService {
     String phone,
   ) async {
     try {
+      print('🔄 Attempting registration for: $email');
+      print('📡 Registration URL: ${ApiConfig.authRegister}');
+      
+      final requestBody = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'vehicle_plate': plate,
+        'vehicle_brand': brand,
+        'vehicle_model': model,
+        'vehicle_color': color,
+        'phone': phone,
+      };
+      
+      print('📤 Request body: ${jsonEncode(requestBody)}');
+      
       final response = await http.post(
         Uri.parse(ApiConfig.authRegister),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-          'password': password,
-          'vehicle_plate': plate,
-          'vehicle_brand': brand,
-          'vehicle_model': model,
-          'vehicle_color': color,
-          'phone': phone,
-        }),
+        body: jsonEncode(requestBody),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Request timeout');
+        },
       );
+
+      print('📡 Registration response status: ${response.statusCode}');
+      print('📡 Registration response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = json.decode(response.body);
         _token = data['token'];
         _currentUser = User.fromJson(data['user'] ?? data);
+        print('✅ Registration successful for: ${_currentUser?.email}');
         return _currentUser;
       } else {
+        print('❌ Registration failed with status: ${response.statusCode}');
+        print('❌ Error response: ${response.body}');
         throw Exception('Registration failed: ${response.body}');
       }
     } catch (e) {
+      print('❌ Exception during registration: $e');
       throw Exception('Registration error: $e');
     }
   }

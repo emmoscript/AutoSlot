@@ -5,17 +5,13 @@ class ApiConfig {
   
   // Para desarrollo, usamos diferentes URLs según la plataforma
   static String get baseUrl {
-    // En producción, usa la URL de Render
-    if (const bool.fromEnvironment('dart.vm.product')) {
-      return productionUrl;
-    }
-    // En desarrollo, intenta múltiples opciones
-    return _getDevBaseUrl();
+    // Siempre usa la URL de producción para asegurar conectividad
+    return productionUrl;
   }
   
   static String _getDevBaseUrl() {
-    // Usa la IP que sabemos que funciona desde las pruebas anteriores
-    return 'http://10.0.0.92:4000';
+    // Para el emulador, usa la URL de producción
+    return productionUrl;
     
     // Alternativas para diferentes entornos:
     // Android emulator: 'http://10.0.2.2:4000'
@@ -23,9 +19,9 @@ class ApiConfig {
     // Localhost: 'http://localhost:4000'
   }
   
-  // URLs específicas para diferentes entornos
-  static const String androidEmulatorUrl = 'http://10.0.2.2:4000';
-  static const String iOSSimulatorUrl = 'http://localhost:4000';
+  // URLs específicas para diferentes entornos (mantenidas para referencia)
+  // static const String androidEmulatorUrl = 'http://10.0.2.2:4000';
+  // static const String iOSSimulatorUrl = 'http://localhost:4000';
   
   // Endpoints de la API
   static String get authLogin => '$baseUrl/api/auth/login';
