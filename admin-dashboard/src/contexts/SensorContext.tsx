@@ -92,7 +92,7 @@ export const SensorProvider: React.FC<SensorProviderProps> = ({ children }) => {
       const spaceToUpdate = lots.flatMap(l => l.spaces).find(s => s.id === spaceId);
       if (!spaceToUpdate) return;
       
-      const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/simulate', {
+             const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ space_id: spaceId, event_type: eventType })
