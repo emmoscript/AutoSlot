@@ -32,7 +32,7 @@ export async function getDb(): Promise<sqlite3.Database> {
             console.log('✅ Database schema initialized');
             
             // Check if parking lots exist, if not, run seeding
-            db.get('SELECT COUNT(*) as count FROM parking_lots', async (err, row) => {
+            db.get('SELECT COUNT(*) as count FROM parking_lots', async (err, row: any) => {
               if (err) {
                 console.error('❌ Error checking parking lots:', err);
                 resolve(db);
@@ -53,7 +53,7 @@ export async function getDb(): Promise<sqlite3.Database> {
           });
         } else {
           // Check if parking lots exist, if not, run seeding
-          db.get('SELECT COUNT(*) as count FROM parking_lots', async (err, row) => {
+          db.get('SELECT COUNT(*) as count FROM parking_lots', async (err, row: any) => {
             if (err) {
               console.error('❌ Error checking parking lots:', err);
               resolve(db);
