@@ -1,4 +1,5 @@
 import { getDb } from './database';
+import bcrypt from 'bcryptjs';
 
 interface SeedLot {
   name: string;
@@ -444,6 +445,40 @@ export async function seedDatabase() {
     
     console.log('🗑️  Cleared existing data');
     
+    // Create admin user automatically
+    console.log('👤 Creating admin user...');
+    const password = 'admin123';
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    // Check if admin user exists
+    const adminExists = await db.get("SELECT id FROM users WHERE email = 'admin@autoslot.com'");
+    
+    if (adminExists) {
+      // Update existing admin user
+      await db.run(
+        "UPDATE users SET password_hash = ?, role = 'admin', is_active = 1 WHERE email = 'admin@autoslot.com'",
+        [passwordHash]
+      );
+      console.log('✅ Admin user updated successfully!');
+    } else {
+      // Create new admin user
+      await db.run(
+        "INSERT INTO users (name, email, password_hash, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          'Admin User',
+          'admin@autoslot.com',
+          passwordHash,
+          'admin',
+          1,
+          new Date().toISOString(),
+          new Date().toISOString()
+        ]
+      );
+      console.log('✅ Admin user created successfully!');
+    }
+    
+    console.log('🔐 Admin credentials: admin@autoslot.com / admin123');
+    
     for (const lotData of seedData) {
       // Insert lot
       const lotResult = await db.run(
@@ -477,6 +512,7 @@ export async function seedDatabase() {
     
     console.log('🎉 Database seeding completed successfully!');
     console.log(`📊 Created ${seedData.length} lots with multiple levels and spaces`);
+    console.log('👤 Admin user ready: admin@autoslot.com / admin123');
     
   } catch (error) {
     console.error('❌ Error seeding database:', error);
