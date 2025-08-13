@@ -158,7 +158,7 @@ export const SensorProvider: React.FC<SensorProviderProps> = ({ children }) => {
 
   const resetAllSpaces = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/spaces/reset', {
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/parking-spaces/reset', {
         method: 'POST',
       });
       if (response.ok) {

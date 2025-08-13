@@ -125,7 +125,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
   // Actualiza el estado de los lotes y muestra notificación
   const simulateSensorEvent = useCallback(async (spaceId: number, eventType: 'vehicle_entered' | 'vehicle_exited') => {
     try {
-      const response = await fetch('http://localhost:4000/api/sensors/simulate', {
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ space_id: spaceId, event_type: eventType })
@@ -304,7 +304,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/sensors/simulate-random', {
+        const response = await fetch('https://autoslot-backend-api.onrender.com/api/sensors/simulate-random', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -383,7 +383,7 @@ export const UnifiedSimulationProvider: React.FC<{ children: ReactNode }> = ({ c
 
   const resetAllSpaces = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/spaces/reset', {
+      const response = await fetch('https://autoslot-backend-api.onrender.com/api/parking-spaces/reset', {
         method: 'POST',
       });
       if (response.ok) {
