@@ -3,6 +3,10 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">autoslot-backend-api.onrender.com</domain>
         <domain includeSubdomains="true">216.24.57.251</domain>
+        <domain includeSubdomains="true">tile.openstreetmap.org</domain>
+        <domain includeSubdomains="true">a.tile.openstreetmap.org</domain>
+        <domain includeSubdomains="true">b.tile.openstreetmap.org</domain>
+        <domain includeSubdomains="true">c.tile.openstreetmap.org</domain>
     </domain-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
