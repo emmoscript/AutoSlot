@@ -160,9 +160,9 @@ interface DemoDataProviderProps {
 }
 
 export const DemoDataProvider: React.FC<DemoDataProviderProps> = ({ children }) => {
-  const [parkingLots, setParkingLots] = useState(demoParkingLots);
+  const [parkingLots] = useState(demoParkingLots);
   const [parkingSpaces, setParkingSpaces] = useState(demoParkingSpaces);
-  const [reservations, setReservations] = useState(demoReservations);
+  const [reservations] = useState(demoReservations);
 
   const getParkingLots = async () => {
     // Simulate API delay
