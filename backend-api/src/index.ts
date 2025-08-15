@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
 import { getDb } from './database';
+import { seedDatabaseWithDb } from './seedData';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '4000', 10);
@@ -26,8 +27,17 @@ app.use(rateLimit({
 async function startServer() {
   try {
     // Initialize database
-    await getDb();
+    const db = await getDb();
     console.log('✅ Database initialized successfully');
+
+    // Auto-seed database on startup (especially important for Render deployments)
+    try {
+      console.log('🌱 Starting automatic database seeding...');
+      await seedDatabaseWithDb(db);
+      console.log('✅ Database seeding completed successfully');
+    } catch (seedError) {
+      console.warn('⚠️ Database seeding failed, but continuing startup:', seedError);
+    }
 
     // Ruta de bienvenida a la API
     app.get('/', (req, res) => {

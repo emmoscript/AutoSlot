@@ -45,31 +45,59 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Verificar si hay sesión guardada al cargar
+  // Auto-login with hardcoded admin credentials for demo
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const savedUser = localStorage.getItem('autoslot_user');
-      const token = localStorage.getItem('autoslot_admin_token');
-      
-      if (savedUser && token) {
-        try {
-          // Verify token is still valid by fetching current user
-          const currentUser = await apiClient.getCurrentUser();
-          const localUser = mapApiUserToLocalUser(currentUser);
+    const autoLogin = async () => {
+      try {
+        console.log('🚀 Auto-login with admin credentials for demo...');
+        
+        // Hardcoded admin credentials for demo
+        const adminEmail = 'admin@autoslot.com';
+        const adminPassword = 'admin123';
+        
+        const response = await apiClient.login(adminEmail, adminPassword);
+        
+        if (response.success && response.user) {
+          const localUser = mapApiUserToLocalUser(response.user);
           setUser(localUser);
           localStorage.setItem('autoslot_user', JSON.stringify(localUser));
-        } catch (error) {
-          console.error('Token validation failed:', error);
-          // Clear invalid session
-          localStorage.removeItem('autoslot_user');
-          localStorage.removeItem('autoslot_admin_token');
-          apiClient.clearToken();
+          console.log('✅ Auto-login successful:', localUser.name);
+          toast.success(`¡Bienvenido al Demo, ${response.user.name}!`);
+        } else {
+          console.error('❌ Auto-login failed');
+          toast.error('Error en auto-login. Usando modo demo local.');
+          
+          // Fallback: create a demo admin user locally
+          const demoUser: User = {
+            id: 1,
+            username: 'admin',
+            email: 'admin@autoslot.com',
+            role: 'admin',
+            name: 'Admin Demo',
+          };
+          setUser(demoUser);
+          localStorage.setItem('autoslot_user', JSON.stringify(demoUser));
         }
+      } catch (error) {
+        console.error('❌ Auto-login error:', error);
+        toast.error('Error en auto-login. Usando modo demo local.');
+        
+        // Fallback: create a demo admin user locally
+        const demoUser: User = {
+          id: 1,
+          username: 'admin',
+          email: 'admin@autoslot.com',
+          role: 'admin',
+          name: 'Admin Demo',
+        };
+        setUser(demoUser);
+        localStorage.setItem('autoslot_user', JSON.stringify(demoUser));
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    checkAuthStatus();
+    autoLogin();
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -128,6 +156,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem('autoslot_user');
       localStorage.removeItem('autoslot_admin_token');
       toast.success('Sesión cerrada correctamente');
+      
+      // Auto-login again after logout for demo
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
   };
 

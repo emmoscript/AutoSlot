@@ -1,5 +1,5 @@
-import { getDb } from './database';
 import bcrypt from 'bcryptjs';
+import { Database } from 'sqlite3';
 
 interface SeedLot {
   name: string;
@@ -433,15 +433,17 @@ const seedData: SeedLot[] = [
   }
 ];
 
-export async function seedDatabase() {
-  const db = await getDb();
-  
+// Function to seed database with a provided database instance
+export async function seedDatabaseWithDb(db: Database) {
   console.log('🌱 Starting database seeding...');
   
   try {
-    // Clear existing data
+    // Clear existing data in the correct order (respecting foreign key constraints)
+    console.log('🗑️  Clearing existing data...');
     await db.run('DELETE FROM parking_spaces');
+    await db.run('DELETE FROM reservations');
     await db.run('DELETE FROM parking_lots');
+    await db.run('DELETE FROM users WHERE email != "admin@autoslot.com"');
     
     console.log('🗑️  Cleared existing data');
     
@@ -479,15 +481,36 @@ export async function seedDatabase() {
     
     console.log('🔐 Admin credentials: admin@autoslot.com / admin123');
     
+    // Insert lots first using promises to properly handle the lastID
+    const lotIds: { [key: string]: number } = {};
+    
     for (const lotData of seedData) {
-      // Insert lot
-      const lotResult = await db.run(
+      // Insert lot using a promise to get the lastID
+      const lotId = await new Promise<number>((resolve, reject) => {
+        db.run(
         'INSERT INTO parking_lots (name, address, latitude, longitude, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [lotData.name, lotData.address, lotData.latitude, lotData.longitude, new Date().toISOString(), new Date().toISOString()]
-      );
+          [lotData.name, lotData.address, lotData.latitude, lotData.longitude, new Date().toISOString(), new Date().toISOString()],
+          function(err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(this.lastID);
+            }
+          }
+        );
+      });
       
-      const lotId = (lotResult as any).lastID;
+      lotIds[lotData.name] = lotId;
       console.log(`✅ Created lot: ${lotData.name} (ID: ${lotId})`);
+    }
+    
+    // Now insert spaces for each lot
+    for (const lotData of seedData) {
+      const lotId = lotIds[lotData.name];
+      if (!lotId) {
+        console.error(`❌ Could not find lot ID for: ${lotData.name}`);
+        continue;
+      }
       
       // Insert spaces for each level
       for (const levelData of lotData.levels) {
@@ -506,7 +529,7 @@ export async function seedDatabase() {
             ]
           );
         }
-        console.log(`  📍 Added ${levelData.spaces.length} spaces for Level ${levelData.level}`);
+        console.log(`  📍 Added ${levelData.spaces.length} spaces for Level ${levelData.level} in ${lotData.name}`);
       }
     }
     
@@ -522,13 +545,6 @@ export async function seedDatabase() {
 
 // Run seeding if this file is executed directly
 if (require.main === module) {
-  seedDatabase()
-    .then(() => {
-      console.log('✅ Seeding completed');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('❌ Seeding failed:', error);
+  console.log('❌ This file should not be executed directly. Use the API endpoint instead.');
       process.exit(1);
-    });
 } 

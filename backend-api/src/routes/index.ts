@@ -7,7 +7,7 @@ import sensorRoutes from './sensorRoutes';
 import quickReserveRoutes from './quickReserveRoutes';
 import bcrypt from 'bcryptjs';
 import { getDb } from '../database';
-import { seedDatabase } from '../seedData';
+import { seedDatabaseWithDb } from '../seedData';
 
 const router = express.Router();
 
@@ -106,7 +106,8 @@ router.post('/setup-admin', async (req, res) => {
 router.post('/seed-database', async (req, res) => {
   try {
     console.log('🌱 Starting database seeding...');
-    await seedDatabase();
+    const db = await getDb();
+    await seedDatabaseWithDb(db);
     console.log('✅ Database seeding completed!');
     res.json({ 
       success: true, 
@@ -115,6 +116,58 @@ router.post('/seed-database', async (req, res) => {
   } catch (error) {
     console.error('❌ Error seeding database:', error);
     res.status(500).json({ error: 'Database seeding failed' });
+  }
+});
+
+// Database status check endpoint
+router.get('/db-status', async (req, res) => {
+  try {
+    const db = await getDb();
+    
+    // Check admin user
+    const adminUser = await new Promise<any>((resolve, reject) => {
+      db.get("SELECT id, email, role, is_active FROM users WHERE email = 'admin@autoslot.com'", (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    
+    // Check parking lots count
+    const lotsCount = await new Promise<number>((resolve, reject) => {
+      db.get("SELECT COUNT(*) as count FROM parking_lots", (err, row: any) => {
+        if (err) reject(err);
+        else resolve(row?.count || 0);
+      });
+    });
+    
+    // Check parking spaces count
+    const spacesCount = await new Promise<number>((resolve, reject) => {
+      db.get("SELECT COUNT(*) as count FROM parking_spaces", (err, row: any) => {
+        if (err) reject(err);
+        else resolve(row?.count || 0);
+      });
+    });
+    
+    res.json({
+      success: true,
+      database_status: {
+        admin_user: adminUser ? {
+          exists: true,
+          role: adminUser.role,
+          is_active: adminUser.is_active === 1
+        } : { exists: false },
+        parking_lots: lotsCount,
+        parking_spaces: spacesCount,
+        seeded: lotsCount > 0 && spacesCount > 0
+      },
+      admin_credentials: {
+        email: 'admin@autoslot.com',
+        password: 'admin123'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error checking database status:', error);
+    res.status(500).json({ error: 'Failed to check database status' });
   }
 });
 
