@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Car, Lock, User, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Car, Lock, User, Copy, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 
@@ -9,35 +9,24 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [autoLoginCountdown, setAutoLoginCountdown] = useState(3);
+  const [copiedField, setCopiedField] = useState<'email' | 'password' | null>(null);
   
-  const { login, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Auto-redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      navigate('/');
-    }
-  }, [isAuthenticated, authLoading, navigate]);
+  // Hardcoded demo credentials
+  const demoEmail = 'admin@autoslot.com';
+  const demoPassword = 'admin123';
 
-  // Auto-login countdown
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      const timer = setInterval(() => {
-        setAutoLoginCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            // Auto-login will be handled by AuthContext
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+  const copyToClipboard = async (text: string, field: 'email' | 'password') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
-  }, [authLoading, isAuthenticated]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,41 +43,6 @@ const Login: React.FC = () => {
       navigate('/');
     }
   };
-
-  // Show loading screen during auto-login
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-        
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-            <Car className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            AutoSlot
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">
-            Sistema de Gestión de Estacionamientos
-          </p>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-md">
-            <div className="flex items-center justify-center mb-4">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Iniciando sesión automáticamente...
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Redirigiendo al dashboard en {autoLoginCountdown} segundos
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -175,20 +129,67 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            {/* Información de acceso */}
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
-                🚀 Modo Demo Activado
+            {/* Credenciales de demo */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-3">
+                🔑 Credenciales de Demo
               </h3>
-              <div className="text-sm text-green-700 dark:text-green-300">
-                <p>Este es un <strong>demo automático</strong>. El sistema iniciará sesión automáticamente.</p>
-                <div className="mt-3 p-3 bg-white dark:bg-gray-700 rounded border border-green-300 dark:border-green-600">
-                  <p className="font-medium text-green-800 dark:text-green-200 mb-1">Credenciales de demo:</p>
-                  <p className="text-xs text-green-700 dark:text-green-300">
-                    <strong>Email:</strong> admin@autoslot.com<br/>
-                    <strong>Contraseña:</strong> admin123
-                  </p>
+              <div className="space-y-3">
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                    Email de Administrador:
+                  </label>
+                  <div className="flex items-center bg-white dark:bg-gray-700 rounded border border-blue-300 dark:border-blue-600 p-2">
+                    <input
+                      type="text"
+                      value={demoEmail}
+                      readOnly
+                      className="flex-1 bg-transparent text-sm text-blue-800 dark:text-blue-200 border-none outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(demoEmail, 'email')}
+                      className="ml-2 p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors"
+                    >
+                      {copiedField === 'email' ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                    Contraseña:
+                  </label>
+                  <div className="flex items-center bg-white dark:bg-gray-700 rounded border border-blue-300 dark:border-blue-600 p-2">
+                    <input
+                      type="text"
+                      value={demoPassword}
+                      readOnly
+                      className="flex-1 bg-transparent text-sm text-blue-800 dark:text-blue-200 border-none outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(demoPassword, 'password')}
+                      className="ml-2 p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors"
+                    >
+                      {copiedField === 'password' ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
+                💡 Haz clic en los iconos de copia para copiar las credenciales
               </div>
             </div>
 
@@ -204,7 +205,7 @@ const Login: React.FC = () => {
                   Iniciando sesión...
                 </div>
               ) : (
-                'Iniciar Sesión Manual'
+                'Iniciar Sesión'
               )}
             </button>
           </form>

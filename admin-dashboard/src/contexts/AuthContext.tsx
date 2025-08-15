@@ -18,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isDemoMode: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
@@ -37,6 +38,15 @@ const mapApiUserToLocalUser = (apiUser: ApiUser): User => {
   };
 };
 
+// Demo admin user for fallback
+const demoAdminUser: User = {
+  id: 1,
+  username: 'admin',
+  email: 'admin@autoslot.com',
+  role: 'admin',
+  name: 'Admin Demo',
+};
+
 interface AuthProviderProps {
   children: React.ReactNode;
 }
@@ -44,60 +54,43 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
-  // Auto-login with hardcoded admin credentials for demo
+  // Verificar si hay sesión guardada al cargar
   useEffect(() => {
-    const autoLogin = async () => {
-      try {
-        console.log('🚀 Auto-login with admin credentials for demo...');
-        
-        // Hardcoded admin credentials for demo
-        const adminEmail = 'admin@autoslot.com';
-        const adminPassword = 'admin123';
-        
-        const response = await apiClient.login(adminEmail, adminPassword);
-        
-        if (response.success && response.user) {
-          const localUser = mapApiUserToLocalUser(response.user);
-          setUser(localUser);
-          localStorage.setItem('autoslot_user', JSON.stringify(localUser));
-          console.log('✅ Auto-login successful:', localUser.name);
-          toast.success(`¡Bienvenido al Demo, ${response.user.name}!`);
-        } else {
-          console.error('❌ Auto-login failed');
-          toast.error('Error en auto-login. Usando modo demo local.');
-          
-          // Fallback: create a demo admin user locally
-          const demoUser: User = {
-            id: 1,
-            username: 'admin',
-            email: 'admin@autoslot.com',
-            role: 'admin',
-            name: 'Admin Demo',
-          };
-          setUser(demoUser);
-          localStorage.setItem('autoslot_user', JSON.stringify(demoUser));
-        }
-      } catch (error) {
-        console.error('❌ Auto-login error:', error);
-        toast.error('Error en auto-login. Usando modo demo local.');
-        
-        // Fallback: create a demo admin user locally
-        const demoUser: User = {
-          id: 1,
-          username: 'admin',
-          email: 'admin@autoslot.com',
-          role: 'admin',
-          name: 'Admin Demo',
-        };
-        setUser(demoUser);
-        localStorage.setItem('autoslot_user', JSON.stringify(demoUser));
-      } finally {
+    const checkAuthStatus = async () => {
+      const savedUser = localStorage.getItem('autoslot_user');
+      const token = localStorage.getItem('autoslot_admin_token');
+      const demoMode = localStorage.getItem('autoslot_demo_mode') === 'true';
+      
+      if (demoMode) {
+        // Demo mode - use simulated user
+        setUser(demoAdminUser);
+        setIsDemoMode(true);
         setIsLoading(false);
+        return;
       }
+      
+      if (savedUser && token) {
+        try {
+          // Verify token is still valid by fetching current user
+          const currentUser = await apiClient.getCurrentUser();
+          const localUser = mapApiUserToLocalUser(currentUser);
+          setUser(localUser);
+          setIsDemoMode(false);
+          localStorage.setItem('autoslot_user', JSON.stringify(localUser));
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          // Clear invalid session
+          localStorage.removeItem('autoslot_user');
+          localStorage.removeItem('autoslot_admin_token');
+          apiClient.clearToken();
+        }
+      }
+      setIsLoading(false);
     };
 
-    autoLogin();
+    checkAuthStatus();
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -108,26 +101,70 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const email = username.includes('@') ? username : `${username}@autoslot.com`;
       
       console.log(`🔐 Attempting login for: ${email}`);
-      const response = await apiClient.login(email, password);
       
-      if (response.success && response.user) {
-        // Check if user is admin
-        if (response.user.role !== 'admin') {
-          toast.error('Acceso denegado: Se requieren permisos de administrador');
+      // Check if using demo credentials
+      if (email === 'admin@autoslot.com' && password === 'admin123') {
+        console.log('🎯 Demo credentials detected, trying backend first...');
+        
+        try {
+          // Try real backend first
+          const response = await apiClient.login(email, password);
+          
+          if (response.success && response.user) {
+            // Check if user is admin
+            if (response.user.role !== 'admin') {
+              toast.error('Acceso denegado: Se requieren permisos de administrador');
+              setIsLoading(false);
+              return false;
+            }
+            
+            const localUser = mapApiUserToLocalUser(response.user);
+            setUser(localUser);
+            setIsDemoMode(false);
+            localStorage.setItem('autoslot_user', JSON.stringify(localUser));
+            localStorage.removeItem('autoslot_demo_mode');
+            toast.success(`¡Bienvenido, ${response.user.name}! (Modo Real)`);
+            setIsLoading(false);
+            return true;
+          }
+        } catch (backendError) {
+          console.log('⚠️ Backend unavailable, switching to demo mode...');
+          
+          // Backend failed, use demo mode
+          setUser(demoAdminUser);
+          setIsDemoMode(true);
+          localStorage.setItem('autoslot_user', JSON.stringify(demoAdminUser));
+          localStorage.setItem('autoslot_demo_mode', 'true');
+          toast.success(`¡Bienvenido al Demo, ${demoAdminUser.name}! (Modo Simulado)`);
+          toast('El backend no está disponible. Usando datos simulados.');
+          setIsLoading(false);
+          return true;
+        }
+      } else {
+        // Non-demo credentials, try backend only
+        const response = await apiClient.login(email, password);
+        
+        if (response.success && response.user) {
+          // Check if user is admin
+          if (response.user.role !== 'admin') {
+            toast.error('Acceso denegado: Se requieren permisos de administrador');
+            setIsLoading(false);
+            return false;
+          }
+          
+          const localUser = mapApiUserToLocalUser(response.user);
+          setUser(localUser);
+          setIsDemoMode(false);
+          localStorage.setItem('autoslot_user', JSON.stringify(localUser));
+          localStorage.removeItem('autoslot_demo_mode');
+          toast.success(`¡Bienvenido, ${response.user.name}!`);
+          setIsLoading(false);
+          return true;
+        } else {
+          toast.error('Credenciales incorrectas');
           setIsLoading(false);
           return false;
         }
-        
-        const localUser = mapApiUserToLocalUser(response.user);
-        setUser(localUser);
-        localStorage.setItem('autoslot_user', JSON.stringify(localUser));
-        toast.success(`¡Bienvenido, ${response.user.name}!`);
-        setIsLoading(false);
-        return true;
-      } else {
-        toast.error('Credenciales incorrectas');
-        setIsLoading(false);
-        return false;
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -135,8 +172,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (errorMessage.toLowerCase().includes('invalid credentials')) {
         toast.error('Credenciales incorrectas');
-      } else if (errorMessage.toLowerCase().includes('network')) {
-        toast.error('Error de conexión. Verifica tu red.');
+      } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+        // Network error - offer demo mode for demo credentials
+        if (username.includes('admin@autoslot.com') || (username === 'admin' && password === 'admin123')) {
+          console.log('🌐 Network error with demo credentials, switching to demo mode...');
+          setUser(demoAdminUser);
+          setIsDemoMode(true);
+          localStorage.setItem('autoslot_user', JSON.stringify(demoAdminUser));
+          localStorage.setItem('autoslot_demo_mode', 'true');
+          toast.success(`¡Bienvenido al Demo, ${demoAdminUser.name}! (Modo Simulado)`);
+          toast('El backend no está disponible. Usando datos simulados.');
+          setIsLoading(false);
+          return true;
+        } else {
+          toast.error('Error de conexión. Verifica tu red.');
+        }
       } else {
         toast.error(`Error: ${errorMessage}`);
       }
@@ -144,23 +194,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
       return false;
     }
+    
+    setIsLoading(false);
+    return false;
   };
 
   const logout = async () => {
     try {
-      await apiClient.logout();
+      if (!isDemoMode) {
+        await apiClient.logout();
+      }
     } catch (error) {
       console.warn('Logout API call failed:', error);
     } finally {
       setUser(null);
+      setIsDemoMode(false);
       localStorage.removeItem('autoslot_user');
       localStorage.removeItem('autoslot_admin_token');
+      localStorage.removeItem('autoslot_demo_mode');
       toast.success('Sesión cerrada correctamente');
-      
-      // Auto-login again after logout for demo
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     }
   };
 
@@ -176,6 +228,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isDemoMode,
     login,
     logout,
     updateUser
